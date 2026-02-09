@@ -6,9 +6,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pjover/espigol/domain/interfaces"
+	"github.com/pjover/espigol/domain/model"
 )
 
 type CSVImporter struct{}
@@ -38,6 +41,11 @@ func (c *CSVImporter) ImportPartners(path string) error {
 		return fmt.Errorf("read header: %w", err)
 	}
 
+	columnIndexes := make(map[string]int)
+	for i, h := range header {
+		columnIndexes[h] = i
+	}
+
 	for {
 		rec, err := r.Read()
 		if err == io.EOF {
@@ -47,17 +55,56 @@ func (c *CSVImporter) ImportPartners(path string) error {
 			return fmt.Errorf("read row: %w", err)
 		}
 
-		for i, h := range header {
-			val := ""
-			if i < len(rec) {
-				val = rec[i]
-			}
-			fmt.Printf("%s: %s\n", h, val)
+		partner, err := c.parsePartner(rec, columnIndexes)
+		if err != nil {
+			return fmt.Errorf("parse partner: %w", err)
 		}
-		fmt.Println("---")
+
+		fmt.Println(partner)
 	}
 
 	return nil
+}
+
+func (c *CSVImporter) parsePartner(rec []string, columnIndexes map[string]int) (*model.Partner, error) {
+	getField := func(name string) string {
+		if idx, ok := columnIndexes[name]; ok && idx < len(rec) {
+			return strings.TrimSpace(rec[idx])
+		}
+		return ""
+	}
+
+	id, err := strconv.Atoi(getField("id"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid id: %w", err)
+	}
+
+	name := getField("name")
+	surname := getField("surname")
+	vatCode := getField("vatCode")
+	email := getField("email")
+	mobile := getField("mobile")
+	partnerTypeStr := getField("partnerType")
+
+	riaNumber, err := strconv.Atoi(getField("riaNumber"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid riaNumber: %w", err)
+	}
+
+	oliveSection := parseBoolean(getField("oliveSection"))
+	livestockSection := parseBoolean(getField("livestockSection"))
+
+	addedOnStr := getField("addedOn")
+	addedOn, err := time.Parse("02/01/2006", addedOnStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid addedOn date: %w", err)
+	}
+
+	return model.NewPartner(id, name, surname, vatCode, email, mobile, model.PartnerType(partnerTypeStr), riaNumber, oliveSection, livestockSection, addedOn), nil
+}
+
+func parseBoolean(s string) bool {
+	return strings.ToLower(s) == "true"
 }
 
 func expandPath(p string) (string, error) {
