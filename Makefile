@@ -12,6 +12,6 @@ run: build
 tidy:
 	go mod tidy
 
-importar-socis:
-	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/socis.csv))
-	go run . importar socis --csv=$(CSVPATH)
+import-partners:
+	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/partners.csv))
+	go run . import partners --csv=$(CSVPATH)

@@ -15,7 +15,8 @@ type CSVImporter struct{}
 
 func NewCSVImporter() interfaces.Importer { return &CSVImporter{} }
 
-func (c *CSVImporter) ImportSocisCSV(path string, w io.Writer) error {
+// Reads the CSV file at path and stores the Partners.
+func (c *CSVImporter) ImportPartners(path string) error {
 	p, err := expandPath(path)
 	if err != nil {
 		return err
@@ -51,9 +52,9 @@ func (c *CSVImporter) ImportSocisCSV(path string, w io.Writer) error {
 			if i < len(rec) {
 				val = rec[i]
 			}
-			fmt.Fprintf(w, "%s: %s\n", h, val)
+			fmt.Printf("%s: %s\n", h, val)
 		}
-		fmt.Fprintln(w, "---")
+		fmt.Println("---")
 	}
 
 	return nil
