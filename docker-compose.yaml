@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:latest
+    platform: linux/arm64
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: espigol
+      POSTGRES_USER: ${POSTGRES_USER}
+    ports:
+      - "5432:5432"
+    networks:
+      - espigol_network
+networks:
+  espigol_network:
+    driver: bridge
