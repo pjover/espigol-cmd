@@ -5,14 +5,6 @@ import (
 	"time"
 )
 
-type PartnerType string
-
-const (
-	Producer     PartnerType = "Productor"
-	Sponsor      PartnerType = "Patrocinador"
-	Collaborator PartnerType = "Col·laborador"
-)
-
 type Partner struct {
 	id               int
 	name             string
@@ -88,6 +80,6 @@ func (p *Partner) AddedOn() time.Time {
 }
 
 func (p *Partner) String() string {
-	return fmt.Sprintf("Partner{id=%d, name=%s, surname=%s, vatCode=%s, email=%s, mobile=%s, partnerType=%s, riaNumber=%d, oliveSection=%v, livestockSection=%v, addedOn=%s}",
+	return fmt.Sprintf("Partner{id=%d, name=%s, surname=%s, vatCode=%s, email=%s, mobile=%s, type=%s, riaNumber=%d, oliveSection=%v, livestockSection=%v, addedOn=%s}",
 		p.id, p.name, p.surname, p.vatCode, p.email, p.mobile, p.partnerType, p.riaNumber, p.oliveSection, p.livestockSection, p.addedOn.Format("2006-01-02"))
 }
