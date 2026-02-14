@@ -1,6 +1,6 @@
 MODULE=github.com/pjover/espigol
 
-.PHONY: build run tidy import-partners up down test
+.PHONY: build run tidy import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test
 
 build:
 	mkdir -p bin
@@ -15,6 +15,14 @@ tidy:
 import-partners:
 	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/partners.csv))
 	go run . import partners --csv=$(CSVPATH)
+
+import-expense-forecasts-common:
+	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/expense-forecasts-common.csv))
+	go run . import expense-forecasts --csv=$(CSVPATH)
+
+import-expense-forecasts-partners:
+	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/expense-forecasts-partners.csv))
+	go run . import expense-forecasts --csv=$(CSVPATH)
 
 up:
 	docker-compose --env-file .env -f docker-compose.yaml up -d

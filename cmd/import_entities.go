@@ -9,6 +9,7 @@ import (
 )
 
 var csvPath string
+var expenseCSV string
 
 var importEntitiesCmd = &cobra.Command{
 	Use:   "import",
@@ -32,9 +33,28 @@ var importPartnersCmd = &cobra.Command{
 	},
 }
 
+var importExpenseForecastsCmd = &cobra.Command{
+	Use:   "expense-forecasts",
+	Short: "Import expense forecasts from CSV",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if expenseCSV == "" {
+			return errors.New("missing --csv flag")
+		}
+
+		csvImporter := cfg.DI().Importer()
+		if err := csvImporter.ImportExpenseForecasts(expenseCSV); err != nil {
+			return fmt.Errorf("import expense forecasts: %w", err)
+		}
+
+		return nil
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(importEntitiesCmd)
 	importEntitiesCmd.AddCommand(importPartnersCmd)
+	importEntitiesCmd.AddCommand(importExpenseForecastsCmd)
 
 	importPartnersCmd.Flags().StringVar(&csvPath, "csv", "", "path to csv file")
+	importExpenseForecastsCmd.Flags().StringVar(&expenseCSV, "csv", "", "path to csv file")
 }
