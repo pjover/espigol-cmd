@@ -57,3 +57,44 @@ invalid,Partner,One,12345678A,partner1@example.com,+34600000001,Productor,1001,t
 		t.Error("Expected error for invalid data, got nil")
 	}
 }
+
+func TestImportExpenseForecastsCommonSections(t *testing.T) {
+	tmpDir := t.TempDir()
+	csvPath := filepath.Join(tmpDir, "expense_forecasts_common.csv")
+
+	csvContent := `Timestamp,Email address,Àmbit,Concepte,Descripció,Brut,Data,Pressuposts,Tipus de despesa
+28/01/2026 08:18:00,anon1@example.com,Comú,Comunicacio,Projecte anual,11280,01/03/2026,,[a2] Activitats d'informació i promoció de productes agraris
+21/01/2026 21:31:00,anon2@example.com,Secció d'oliva,Formacio,Curs tecnic,1200,01/03/2026,,[a3] Activitats d'informació i promoció de productes agraris
+`
+
+	err := os.WriteFile(csvPath, []byte(csvContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test CSV file: %v", err)
+	}
+
+	importer := NewCSVImporter()
+	err = importer.ImportExpenseForecasts(csvPath)
+	if err != nil {
+		t.Errorf("ImportExpenseForecasts failed: %v", err)
+	}
+}
+
+func TestImportExpenseForecastsPartners(t *testing.T) {
+	tmpDir := t.TempDir()
+	csvPath := filepath.Join(tmpDir, "expense_forecasts_partners.csv")
+
+	csvContent := `Timestamp,Email address,Concepte,Descripció,Brut,Data,Pressuposts,Tipus de despesa
+13/01/2026 19:51:00,anon3@example.com,Menjar animals,Compra pinso,4000,01/03/2026,,[a6] Despeses de fertilitzants, productes d'alimentació animal i ormejos
+`
+
+	err := os.WriteFile(csvPath, []byte(csvContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test CSV file: %v", err)
+	}
+
+	importer := NewCSVImporter()
+	err = importer.ImportExpenseForecasts(csvPath)
+	if err != nil {
+		t.Errorf("ImportExpenseForecasts failed: %v", err)
+	}
+}
