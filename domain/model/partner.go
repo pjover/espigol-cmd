@@ -79,6 +79,10 @@ func (p *Partner) AddedOn() time.Time {
 	return p.addedOn
 }
 
+func (p *Partner) ScreenName() string {
+	return fmt.Sprintf("%d - %s", p.id, p.name)
+}
+
 func (p *Partner) String() string {
 	return fmt.Sprintf("Partner{id=%d, name=%s, surname=%s, vatCode=%s, email=%s, mobile=%s, type=%s, riaNumber=%d, oliveSection=%v, livestockSection=%v, addedOn=%s}",
 		p.id, p.name, p.surname, p.vatCode, p.email, p.mobile, p.partnerType, p.riaNumber, p.oliveSection, p.livestockSection, p.addedOn.Format("2006-01-02"))

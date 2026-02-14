@@ -1,6 +1,6 @@
 MODULE=github.com/pjover/espigol
 
-.PHONY: build run tidy import-partners up down
+.PHONY: build run tidy import-partners up down test
 
 build:
 	mkdir -p bin
@@ -21,3 +21,6 @@ up:
 
 down:
 	docker-compose -f docker-compose.yaml down
+
+test:
+	go test ./...

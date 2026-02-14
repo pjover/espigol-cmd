@@ -48,8 +48,8 @@ func (ef *ExpenseForecast) ID() int {
 	return ef.id
 }
 
-func (ef *ExpenseForecast) Partner() Partner {
-	return ef.partner
+func (ef *ExpenseForecast) Partner() *Partner {
+	return &ef.partner
 }
 
 func (ef *ExpenseForecast) Concept() string {
