@@ -4,12 +4,12 @@ import (
 	"log"
 	"sync"
 
-	"github.com/pjover/espigol/domain/interfaces"
+	"github.com/pjover/espigol/domain/ports"
 	importers "github.com/pjover/espigol/domain/services/importers"
 )
 
 type DependencyInjector struct {
-	importer interfaces.Importer
+	importer ports.Importer
 }
 
 // Singleton instance of DiContainer
@@ -29,6 +29,6 @@ func DI() *DependencyInjector {
 	return instance
 }
 
-func (di DependencyInjector) Importer() interfaces.Importer {
+func (di DependencyInjector) Importer() ports.Importer {
 	return di.importer
 }

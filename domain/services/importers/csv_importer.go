@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pjover/espigol/domain/interfaces"
 	"github.com/pjover/espigol/domain/model"
+	"github.com/pjover/espigol/domain/ports"
 )
 
 type CSVImporter struct{}
 
-func NewCSVImporter() interfaces.Importer { return &CSVImporter{} }
+func NewCSVImporter() ports.Importer { return &CSVImporter{} }
 
 // Reads the CSV file at path and stores the Partners.
 func (c *CSVImporter) ImportPartners(path string) error {

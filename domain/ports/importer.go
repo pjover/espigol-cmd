@@ -1,4 +1,4 @@
-package interfaces
+package ports
 
 // Importer defines methods to import entities and resources.
 type Importer interface {
