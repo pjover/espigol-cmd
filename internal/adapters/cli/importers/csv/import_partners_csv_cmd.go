@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 
+	"github.com/pjover/espigol/internal/adapters/cli"
 	"github.com/pjover/espigol/internal/domain/ports"
 	"github.com/spf13/cobra"
-	"github.com/pjover/espigol/internal/adapters/cli"
 )
 
 type importPartnersCsvCmd struct {
@@ -24,6 +24,7 @@ func (i importPartnersCsvCmd) Cmd() *cobra.Command {
 		Short: "Importar socis d'un fitxer CSV",
 		Aliases: []string{
 			"is",
+			"importPartners",
 			"importarSocis",
 			"importar-socis",
 		},

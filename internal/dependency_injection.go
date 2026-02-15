@@ -5,9 +5,9 @@ import (
 
 	"github.com/pjover/espigol/internal/adapters/cfg"
 	"github.com/pjover/espigol/internal/adapters/cli"
+	csv "github.com/pjover/espigol/internal/adapters/cli/importers/csv"
 	"github.com/pjover/espigol/internal/domain/ports"
 	importers "github.com/pjover/espigol/internal/domain/services/importers"
-	csv "github.com/pjover/espigol/internal/adapters/cli/importers/csv"
 )
 
 func InjectDependencies() ports.CommandManager {
@@ -27,6 +27,10 @@ func InjectDependencies() ports.CommandManager {
 
 func importersDI(cmdManager ports.CommandManager) {
 	importService := importers.NewCsvImporter()
+	
 	importPartnersCsvCmd := csv.NewImportPartnersCsvCmd(importService)
 	cmdManager.AddCommand(importPartnersCsvCmd)
+	
+	importExpenseForecastsCsvCmd := csv.NewImportExpenseForecastsCsvCmd(importService)
+	cmdManager.AddCommand(importExpenseForecastsCsvCmd)
 }

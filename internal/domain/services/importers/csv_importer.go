@@ -68,10 +68,6 @@ func (c *CsvImporter) ImportPartners(path string) (msg string, err error) {
 
 // Reads the CSV file at the provided path and outputs ExpenseForecasts.
 func (c *CsvImporter) ImportExpenseForecasts(path string) (msg string, err error) {
-	return c.importExpenseForecastsFromFile(path)
-}
-
-func (c *CsvImporter) importExpenseForecastsFromFile(path string) (msg string, err error) {
 	p, err := expandPath(path)
 	if err != nil {
 		return "", err

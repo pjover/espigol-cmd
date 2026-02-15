@@ -7,25 +7,25 @@ format:
 
 build: format
 	mkdir -p bin
-	go build -o bin/espigol .
+	go build -o bin/espigol ./cmd/espigol
 
 run: build
-	go run . $(ARGS)
+	go run ./cmd/espigol $(ARGS)
 
 tidy:
 	go mod tidy
 
 import-partners:
 	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/partners.csv))
-	go run . import partners --csv=$(CSVPATH)
+	go run ./cmd/espigol importPartners $(CSVPATH)
 
 import-expense-forecasts-common:
 	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/expense-forecasts-common.csv))
-	go run . import expense-forecasts --csv=$(CSVPATH)
+	go run ./cmd/espigol importExpenseForecasts $(CSVPATH)
 
 import-expense-forecasts-partners:
 	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/expense-forecasts-partners.csv))
-	go run . import expense-forecasts --csv=$(CSVPATH)
+	go run ./cmd/espigol importExpenseForecasts $(CSVPATH)
 
 up:
 	docker-compose --env-file .env -f docker-compose.yaml up -d
