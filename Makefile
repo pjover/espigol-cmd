@@ -17,15 +17,15 @@ tidy:
 
 import-partners:
 	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/partners.csv))
-	go run ./cmd/espigol importPartners $(CSVPATH)
+	go run ./cmd/espigol import partners --file=$(CSVPATH)
 
 import-expense-forecasts-common:
 	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/expense-forecasts-common.csv))
-	go run ./cmd/espigol importExpenseForecasts $(CSVPATH)
+	go run ./cmd/espigol import expense-forecasts --file=$(CSVPATH)
 
 import-expense-forecasts-partners:
 	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/expense-forecasts-partners.csv))
-	go run ./cmd/espigol importExpenseForecasts $(CSVPATH)
+	go run ./cmd/espigol import expense-forecasts --file=$(CSVPATH)
 
 up:
 	docker-compose --env-file .env -f docker-compose.yaml up -d

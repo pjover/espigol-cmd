@@ -27,10 +27,10 @@ func InjectDependencies() ports.CommandManager {
 
 func importersDI(cmdManager ports.CommandManager) {
 	importService := importers.NewCsvImporter()
-	
-	importPartnersCsvCmd := csv.NewImportPartnersCsvCmd(importService)
-	cmdManager.AddCommand(importPartnersCsvCmd)
-	
-	importExpenseForecastsCsvCmd := csv.NewImportExpenseForecastsCsvCmd(importService)
-	cmdManager.AddCommand(importExpenseForecastsCsvCmd)
+
+	importPartnersCmd := csv.NewImportPartnersCsvCmd(importService)
+	importExpenseForecastsCmd := csv.NewImportExpenseForecastsCsvCmd(importService)
+	importCmd := csv.NewImportCmd(importPartnersCmd, importExpenseForecastsCmd)
+
+	cmdManager.AddCommand(importCmd)
 }
