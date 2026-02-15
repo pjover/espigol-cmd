@@ -1,8 +1,11 @@
 MODULE=github.com/pjover/espigol
 
-.PHONY: build run tidy import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test
+.PHONY: format build run tidy import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test
 
-build:
+format:
+	go fmt ./...
+
+build: format
 	mkdir -p bin
 	go build -o bin/espigol .
 

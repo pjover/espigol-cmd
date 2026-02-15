@@ -22,7 +22,7 @@ func TestExpenseSubtypeConstants(t *testing.T) {
 		{"ExpenseSubtypeC1", ExpenseSubtypeC1, "[c1] Despeses estructurals"},
 		{"ExpenseSubtypeC2", ExpenseSubtypeC2, "[c2] Despeses de personal"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if string(tt.got) != tt.expected {
@@ -51,7 +51,7 @@ func TestExpenseSubtypeType(t *testing.T) {
 		{ExpenseSubtypeC1, ExpenseTypeC},
 		{ExpenseSubtypeC2, ExpenseTypeC},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(string(tt.subtype), func(t *testing.T) {
 			got := tt.subtype.Type()
@@ -71,7 +71,7 @@ func TestExpenseSubtypeString(t *testing.T) {
 		{ExpenseSubtypeB2, "[b2] Manteniment i restauració d'elements etnològics vinculats al manteniment de l'activitat agrària"},
 		{ExpenseSubtypeC2, "[c2] Despeses de personal"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(string(tt.subtype), func(t *testing.T) {
 			got := tt.subtype.String()

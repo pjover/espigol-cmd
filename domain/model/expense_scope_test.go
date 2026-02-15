@@ -13,7 +13,7 @@ func TestExpenseScopeConstants(t *testing.T) {
 		{"ExpenseScopeLivestockSection", ExpenseScopeLivestockSection, "Secció de ramaderia"},
 		{"ExpenseScopePartner", ExpenseScopePartner, "Soci"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if string(tt.got) != tt.expected {
@@ -33,7 +33,7 @@ func TestExpenseScopeString(t *testing.T) {
 		{ExpenseScopeLivestockSection, "Secció de ramaderia"},
 		{ExpenseScopePartner, "Soci"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(string(tt.scope), func(t *testing.T) {
 			got := tt.scope.String()

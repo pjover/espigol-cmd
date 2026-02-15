@@ -12,7 +12,7 @@ func TestExpenseTypeConstants(t *testing.T) {
 		{"ExpenseTypeB", ExpenseTypeB, "[b] Despeses de caràcter permanent o d'inversió"},
 		{"ExpenseTypeC", ExpenseTypeC, "[c] Despeses indirectes o d'estructura de l'entitat beneficiària"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if string(tt.got) != tt.expected {
@@ -31,7 +31,7 @@ func TestExpenseTypeString(t *testing.T) {
 		{ExpenseTypeB, "[b] Despeses de caràcter permanent o d'inversió"},
 		{ExpenseTypeC, "[c] Despeses indirectes o d'estructura de l'entitat beneficiària"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(string(tt.expenseType), func(t *testing.T) {
 			got := tt.expenseType.String()

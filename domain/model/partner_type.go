@@ -11,4 +11,3 @@ const (
 func (pt PartnerType) String() string {
 	return string(pt)
 }
-
