@@ -1,6 +1,6 @@
 MODULE=github.com/pjover/espigol
 
-.PHONY: format build run tidy import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test
+.PHONY: format build run tidy import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test init-db
 
 format:
 	go fmt ./...
@@ -32,6 +32,16 @@ up:
 
 down:
 	docker-compose -f docker-compose.yaml down
+
+init-db:
+	@docker exec espigol-mongo_server-1 mongosh --quiet --eval ' \
+		if (db.getMongo().getDBNames().indexOf("espigol") < 0) { \
+			db.getSiblingDB("espigol").createCollection("_init"); \
+			print("Database espigol created"); \
+		} else { \
+			print("Database espigol already exists"); \
+		} \
+	'
 
 test:
 	go test ./...

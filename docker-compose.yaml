@@ -1,15 +1,25 @@
 services:
-  postgres:
-    image: postgres:latest
-    platform: linux/arm64
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: espigol
-      POSTGRES_USER: ${POSTGRES_USER}
+  mongo_server:
+    image: arm64v8/mongo:focal
     ports:
-      - "5432:5432"
-    networks:
-      - espigol_network
-networks:
-  espigol_network:
-    driver: bridge
+      - "27017:27017"
+    volumes:
+      - ${ESPIGOL_DB_DATA_DIRECTORY}:/data/db
+    healthcheck:
+      test: mongosh --eval 'db.runCommand("ping").ok' localhost:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  mongo_express:
+    image: arm64v8/mongo-express:latest
+    depends_on:
+      mongo_server:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_OPTIONS_EDITORTHEME: "ambiance"
+      ME_CONFIG_MONGODB_SERVER: "mongo_server"
+      ME_CONFIG_BASICAUTH: "false"
