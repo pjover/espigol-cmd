@@ -14,9 +14,13 @@ import (
 	"github.com/pjover/espigol/internal/domain/ports"
 )
 
-type CsvImporter struct{}
+type CsvImporter struct {
+	dbService ports.DbService
+}
 
-func NewCsvImporter() ports.ImportService { return &CsvImporter{} }
+func NewCsvImporter(dbService ports.DbService) ports.ImportService {
+	return &CsvImporter{dbService: dbService}
+}
 
 // Reads the CSV file at path and stores the Partners.
 func (c *CsvImporter) ImportPartners(path string) (msg string, err error) {
@@ -60,6 +64,10 @@ func (c *CsvImporter) ImportPartners(path string) (msg string, err error) {
 			return "", fmt.Errorf("parse partner: %w", err)
 		}
 
+		if err := c.dbService.UpsertPartner(partner); err != nil {
+			return "", fmt.Errorf("upsert partner: %w", err)
+		}
+
 		fmt.Println(partner)
 	}
 
@@ -100,7 +108,6 @@ func (c *CsvImporter) ImportExpenseForecasts(path string) (msg string, err error
 		scopeOverride = &scope
 	}
 
-	rowID := 1
 	for {
 		rec, err := r.Read()
 		if err == io.EOF {
@@ -110,13 +117,16 @@ func (c *CsvImporter) ImportExpenseForecasts(path string) (msg string, err error
 			return "", fmt.Errorf("read row: %w", err)
 		}
 
-		forecast, err := c.parseExpenseForecast(rec, columnIndexes, scopeOverride, rowID)
+		forecast, err := c.parseExpenseForecast(rec, columnIndexes, scopeOverride)
 		if err != nil {
 			return "", fmt.Errorf("parse expense forecast: %w", err)
 		}
 
+		if err := c.dbService.UpsertExpenseForecast(forecast); err != nil {
+			return "", fmt.Errorf("upsert expense forecast: %w", err)
+		}
+
 		fmt.Println(forecast)
-		rowID++
 	}
 
 	return fmt.Sprintf("file %s with expense forecasts successfully imported", path), nil
@@ -159,7 +169,7 @@ func (c *CsvImporter) parsePartner(rec []string, columnIndexes map[string]int) (
 	return model.NewPartner(id, name, surname, vatCode, email, mobile, model.PartnerType(partnerTypeStr), riaNumber, oliveSection, livestockSection, addedOn), nil
 }
 
-func (c *CsvImporter) parseExpenseForecast(rec []string, columnIndexes map[string]int, scopeOverride *model.ExpenseScope, rowID int) (*model.ExpenseForecast, error) {
+func (c *CsvImporter) parseExpenseForecast(rec []string, columnIndexes map[string]int, scopeOverride *model.ExpenseScope) (*model.ExpenseForecast, error) {
 	getField := func(name string) string {
 		if idx, ok := columnIndexes[name]; ok && idx < len(rec) {
 			return strings.TrimSpace(rec[idx])
@@ -241,10 +251,15 @@ func (c *CsvImporter) parseExpenseForecast(rec []string, columnIndexes map[strin
 		return nil, err
 	}
 
-	partner := partnerFromEmail(getValue("Email address"), rowID, addedOn)
+	id, err := strconv.Atoi(getField("id"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid id: %w", err)
+	}
+
+	partner := partnerFromEmail(getValue("Email address"), id, addedOn)
 
 	return model.NewExpenseForecast(
-		rowID,
+		id,
 		partner,
 		getValue("Concepte"),
 		getValue("Descripció"),

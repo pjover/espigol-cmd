@@ -41,6 +41,9 @@ init-db:
 		} else { \
 			print("Database espigol already exists"); \
 		} \
+		const espigolDb = db.getSiblingDB("espigol"); \
+		espigolDb.partner.createIndex({ email: 1 }, { unique: true, sparse: true }); \
+		print("Index on partner.email ensured"); \
 	'
 
 test:
