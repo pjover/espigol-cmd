@@ -4,7 +4,7 @@ import "time"
 
 type ExpenseForecast struct {
 	Id             int       `bson:"_id"`
-	PartnerEmail   string    `bson:"partner_email"`
+	PartnerId      int       `bson:"partner_id"`
 	Concept        string    `bson:"concept"`
 	Description    string    `bson:"description"`
 	GrossAmount    float64   `bson:"gross_amount"`

@@ -40,8 +40,11 @@ func TestConvertExpenseForecastToDbo(t *testing.T) {
 
 	dboForecast := ConvertExpenseForecastToDbo(forecast)
 
-	if dboForecast.Id != 101 || dboForecast.PartnerEmail != "john@example.com" {
+	if dboForecast.Id != 101 || dboForecast.PartnerId != 1 {
 		t.Error("ExpenseForecast conversion to DBO failed")
+	}
+	if dboForecast.ExpenseSubtype != "a1" {
+		t.Errorf("Expected subtype code 'a1', got '%s'", dboForecast.ExpenseSubtype)
 	}
 }
 
@@ -63,10 +66,10 @@ func TestConvertExpenseForecastToModel(t *testing.T) {
 	)
 
 	dboForecast := ExpenseForecast{
-		Id:           202,
-		PartnerEmail: "jane@example.com",
-		Concept:      "Seeds",
-		AddedOn:      addedOn,
+		Id:        202,
+		PartnerId: 2,
+		Concept:   "Seeds",
+		AddedOn:   addedOn,
 	}
 
 	forecast := ConvertExpenseForecastToModel(dboForecast, partner)
