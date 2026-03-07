@@ -1,6 +1,6 @@
 MODULE=github.com/pjover/espigol
 
-.PHONY: format build run tidy import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test init-db
+.PHONY: format build run tidy import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test init-db server-start server-stop server-status
 
 format:
 	go fmt ./...
@@ -32,6 +32,15 @@ up:
 
 down:
 	docker-compose -f docker-compose.yaml down
+
+start: up
+	go run ./cmd/espigol server start
+
+stop:
+	go run ./cmd/espigol server stop
+
+status:
+	go run ./cmd/espigol server status
 
 init-db:
 	@docker exec espigol-mongo_server-1 mongosh --quiet --eval ' \

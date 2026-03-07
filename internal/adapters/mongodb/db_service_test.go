@@ -86,7 +86,7 @@ func TestDbServiceImplementsInterface(t *testing.T) {
 
 func TestDbServiceMethods(t *testing.T) {
 	mockConfig := &MockConfigService{
-		dbServer: "mongodb://invalid-host-that-does-not-exist:27017",
+		dbServer: "mongodb://invalid-host-that-does-not-exist:27017/?serverSelectionTimeoutMS=10&connectTimeoutMS=10",
 		dbName:   "testdb",
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/pjover/espigol/internal/adapters/cfg"
 	"github.com/pjover/espigol/internal/adapters/cli"
 	csv "github.com/pjover/espigol/internal/adapters/cli/importers/csv"
+	"github.com/pjover/espigol/internal/adapters/cli/server"
 	"github.com/pjover/espigol/internal/adapters/mongodb"
 	"github.com/pjover/espigol/internal/domain/ports"
 	importers "github.com/pjover/espigol/internal/domain/services/importers"
@@ -22,6 +23,14 @@ func InjectDependencies() ports.CommandManager {
 
 	// 3. Importers
 	importersDI(cmdManager, configService)
+
+	// 4. Server Commands
+	serverCmd := server.NewServerCmd(
+		server.NewStartCmd(),
+		server.NewStopCmd(),
+		server.NewStatusCmd(),
+	)
+	cmdManager.AddCommand(serverCmd)
 
 	return cmdManager
 }
