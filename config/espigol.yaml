@@ -9,7 +9,7 @@ expenses:
       current: 30000
       investment: 70000
 files:
-  logo: configs/logo.png
+  logo: config/logo.png
 output:
   directory: ~/espigol/reports
 server:

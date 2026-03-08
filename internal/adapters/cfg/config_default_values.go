@@ -6,7 +6,8 @@ var defaultValues = map[string]interface{}{
 	"db.name":                         "espigol",
 	"expenses.limits.2026.current":    30000.0,
 	"expenses.limits.2026.investment": 70000.0,
-	"files.logo":                      "configs/logo.png",
-	"output.directory":                "~/espigol/reports",
+	"files.logo":                      "config/logo.png",
+	"output.directory":                "~/espigol",
 	"server.port":                     "8080",
 }
+ 

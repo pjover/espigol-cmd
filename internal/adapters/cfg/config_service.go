@@ -57,7 +57,7 @@ func (c *configService) findHomeDirectory() string {
 
 func (c *configService) searchConfigInRootDirectory() {
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("./configs")
+	viper.AddConfigPath("./config")
 	viper.SetConfigName("espigol")
 	viper.SetConfigType("yaml")
 }

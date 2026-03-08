@@ -32,7 +32,7 @@ El projecte segueix l'**Arquitectura Hexagonal** (Ports i Adaptadors):
 | **Cicle de vida del servidor** | Comandes CLI `server start`, `server stop`, `server status` (seguiment via fitxer PID) |
 | **Persistència**               | MongoDB via `go.mongodb.org/mongo-driver`                                              |
 | **Categoria de despesa**       | Classificació automàtica de les previsions en despesa corrent o d'inversió             |
-| **Límits de subvenció**        | Límits anuals de subvenció llegits des de `configs/espigol.yaml`                       |
+| **Límits de subvenció**        | Límits anuals de subvenció llegits des de `config/espigol.yaml`                        |
 
 ---
 
@@ -142,7 +142,7 @@ make server-stop
 | **Swagger JSON**  | http://localhost:8080/swagger/doc.json   | Especificació OpenAPI 2.0         |
 | **Mongo Express** | http://localhost:8081/db/espigol         | Interfície web de MongoDB         |
 
-> Els ports es configuren a `configs/espigol.yaml`.
+> Els ports es configuren a `config/espigol.yaml`.
 
 ---
 
@@ -195,7 +195,7 @@ make server-status                  # Comprova l'estat del servidor REST make ge
 
 ## Configuració
 
-El fitxer de configuració principal és `configs/espigol.yaml`:
+El fitxer de configuració principal és `config/espigol.yaml`:
 
 ```yaml
 business:
@@ -209,7 +209,7 @@ expenses:
       current: 30000
       investment: 70000
 files:
-  logo: configs/logo.png
+  logo: config/logo.png
 output:
   directory: ~/espigol/reports
 server:
