@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/pjover/espigol/internal/domain/model"
 )
@@ -25,7 +26,9 @@ func (m *MockDbService) UpsertPartner(partner *model.Partner) error {
 }
 
 func (m *MockDbService) FindPartnerByEmail(email string) (*model.Partner, error) {
-	return nil, nil
+	p := model.NewPartner(1, "Test", "Partner", "00000000A", email, "+34600000000",
+		model.Producer, 0, false, false, time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC))
+	return p, nil
 }
 
 func (m *MockDbService) UpsertExpenseForecast(forecast *model.ExpenseForecast) error {

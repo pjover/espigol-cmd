@@ -256,11 +256,18 @@ func (c *CsvImporter) parseExpenseForecast(rec []string, columnIndexes map[strin
 		return nil, fmt.Errorf("invalid id: %w", err)
 	}
 
-	partner := partnerFromEmail(getValue("Email address"), id, addedOn)
+	email := getValue("Email address")
+	partnerPtr, err := c.dbService.FindPartnerByEmail(email)
+	if err != nil {
+		return nil, fmt.Errorf("look up partner by email %q: %w", email, err)
+	}
+	if partnerPtr == nil {
+		return nil, fmt.Errorf("partner not found for email %q", email)
+	}
 
 	return model.NewExpenseForecast(
 		id,
-		partner,
+		*partnerPtr,
 		getValue("Concepte"),
 		getValue("Descripció"),
 		grossAmount,
@@ -270,22 +277,6 @@ func (c *CsvImporter) parseExpenseForecast(rec []string, columnIndexes map[strin
 		nil,
 		addedOn,
 	), nil
-}
-
-func partnerFromEmail(email string, id int, addedOn time.Time) model.Partner {
-	return *model.NewPartner(
-		id,
-		"Unknown",
-		"",
-		"",
-		email,
-		"",
-		model.Producer,
-		0,
-		false,
-		false,
-		addedOn,
-	)
 }
 
 func parseExpenseScope(value string) (model.ExpenseScope, error) {
