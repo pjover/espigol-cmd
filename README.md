@@ -97,6 +97,24 @@ make import-expense-forecasts-partners
 ./bin/espigol import expense-forecasts --file=ruta/al/fitxer.csv
 ```
 
+### Generació d'informes
+
+```bash
+# Generar l'informe PDF de previsions de despeses per a l'any en curs
+make generate-expense-forecast-report
+
+# Generar l'informe per a un any concret
+make generate-expense-forecast-report YEAR=2026
+
+# O directament amb la CLI
+./bin/espigol generate expense-forecast-report
+./bin/espigol generate expense-forecast-report --year=2026
+```
+
+L'informe es desa a `output.directory` (per defecte `~/espigol/reports`) amb el nom `Despeses YYYY.pdf`. Si alguna categoria presenta un romanent negatiu, s'inclou un apartat d'ajust proporcional i el procés retorna codi de sortida diferent de zero.
+
+---
+
 ### Gestió del servidor REST
 
 ```bash
@@ -171,8 +189,7 @@ make import-expense-forecasts-common [CSV=path]   # Importa despeses comunes
 make import-expense-forecasts-partners [CSV=path] # Importa despeses per soci
 make server-start                   # Inicia el servidor REST
 make server-stop                    # Atura el servidor REST
-make server-status                  # Comprova l'estat del servidor REST
-```
+make server-status                  # Comprova l'estat del servidor REST make generate-expense-forecast-report [YEAR=YYYY]  # Genera l'informe PDF de despeses```
 
 ---
 
@@ -181,6 +198,8 @@ make server-status                  # Comprova l'estat del servidor REST
 El fitxer de configuració principal és `configs/espigol.yaml`:
 
 ```yaml
+business:
+  name: Cooperativa d'Estellencs
 db:
   name: espigol
   server: mongodb://localhost:27017
@@ -189,6 +208,10 @@ expenses:
     "2026":
       current: 30000
       investment: 70000
+files:
+  logo: configs/logo.png
+output:
+  directory: ~/espigol/reports
 server:
   port: 8080
 urls:
