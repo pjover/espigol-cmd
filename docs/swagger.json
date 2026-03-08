@@ -1,0 +1,560 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "REST API for managing partners and expense forecasts.",
+        "title": "Espigol API",
+        "contact": {
+            "name": "Espigol"
+        },
+        "license": {
+            "name": "MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/expense-forecasts": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expense-forecasts"
+                ],
+                "summary": "List all expense forecasts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_adapters_http.ExpenseForecastResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expense-forecasts"
+                ],
+                "summary": "Create a new expense forecast",
+                "parameters": [
+                    {
+                        "description": "ExpenseForecast payload",
+                        "name": "forecast",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.ExpenseForecastRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.ExpenseForecastResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/expense-forecasts/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expense-forecasts"
+                ],
+                "summary": "Get an expense forecast by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ExpenseForecast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.ExpenseForecastResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expense-forecasts"
+                ],
+                "summary": "Update an existing expense forecast",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ExpenseForecast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ExpenseForecast payload",
+                        "name": "forecast",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.ExpenseForecastRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.ExpenseForecastResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "expense-forecasts"
+                ],
+                "summary": "Delete an expense forecast by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ExpenseForecast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/partners": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "partners"
+                ],
+                "summary": "List all partners",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_adapters_http.PartnerResponse"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "partners"
+                ],
+                "summary": "Create a new partner",
+                "parameters": [
+                    {
+                        "description": "Partner payload",
+                        "name": "partner",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.PartnerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.PartnerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/partners/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "partners"
+                ],
+                "summary": "Get a partner by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Partner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.PartnerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "partners"
+                ],
+                "summary": "Update an existing partner",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Partner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Partner payload",
+                        "name": "partner",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.PartnerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.PartnerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "partners"
+                ],
+                "summary": "Delete a partner by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Partner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http.errorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "internal_adapters_http.ExpenseForecastRequest": {
+            "type": "object",
+            "properties": {
+                "addedOn": {
+                    "type": "string"
+                },
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "concept": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "expenseSubtype": {
+                    "type": "string"
+                },
+                "grossAmount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "partnerId": {
+                    "type": "integer"
+                },
+                "plannedDate": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_adapters_http.ExpenseForecastResponse": {
+            "type": "object",
+            "properties": {
+                "addedOn": {
+                    "type": "string"
+                },
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "concept": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "expenseSubtype": {
+                    "type": "string"
+                },
+                "grossAmount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "partnerId": {
+                    "type": "integer"
+                },
+                "plannedDate": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_adapters_http.PartnerRequest": {
+            "type": "object",
+            "properties": {
+                "addedOn": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "livestockSection": {
+                    "type": "boolean"
+                },
+                "mobile": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "oliveSection": {
+                    "type": "boolean"
+                },
+                "partnerType": {
+                    "type": "string"
+                },
+                "riaNumber": {
+                    "type": "integer"
+                },
+                "surname": {
+                    "type": "string"
+                },
+                "vatCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_adapters_http.PartnerResponse": {
+            "type": "object",
+            "properties": {
+                "addedOn": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "livestockSection": {
+                    "type": "boolean"
+                },
+                "mobile": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "oliveSection": {
+                    "type": "boolean"
+                },
+                "partnerType": {
+                    "type": "string"
+                },
+                "riaNumber": {
+                    "type": "integer"
+                },
+                "surname": {
+                    "type": "string"
+                },
+                "vatCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_adapters_http.errorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

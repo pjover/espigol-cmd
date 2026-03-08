@@ -1,0 +1,25 @@
+services:
+  mongo_server:
+    image: arm64v8/mongo:focal
+    ports:
+      - "27017:27017"
+    volumes:
+      - ${ESPIGOL_DB_DATA_DIRECTORY}:/data/db
+    healthcheck:
+      test: mongosh --eval 'db.runCommand("ping").ok' localhost:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  mongo_express:
+    image: arm64v8/mongo-express:latest
+    depends_on:
+      mongo_server:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_OPTIONS_EDITORTHEME: "ambiance"
+      ME_CONFIG_MONGODB_SERVER: "mongo_server"
+      ME_CONFIG_BASICAUTH: "false"

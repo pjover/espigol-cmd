@@ -1,0 +1,366 @@
+basePath: /
+definitions:
+  internal_adapters_http.ExpenseForecastRequest:
+    properties:
+      addedOn:
+        type: string
+      attachments:
+        items:
+          type: string
+        type: array
+      concept:
+        type: string
+      description:
+        type: string
+      expenseSubtype:
+        type: string
+      grossAmount:
+        type: number
+      id:
+        type: integer
+      partnerId:
+        type: integer
+      plannedDate:
+        type: string
+      scope:
+        type: string
+    type: object
+  internal_adapters_http.ExpenseForecastResponse:
+    properties:
+      addedOn:
+        type: string
+      attachments:
+        items:
+          type: string
+        type: array
+      concept:
+        type: string
+      description:
+        type: string
+      expenseSubtype:
+        type: string
+      grossAmount:
+        type: number
+      id:
+        type: integer
+      partnerId:
+        type: integer
+      plannedDate:
+        type: string
+      scope:
+        type: string
+    type: object
+  internal_adapters_http.PartnerRequest:
+    properties:
+      addedOn:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      livestockSection:
+        type: boolean
+      mobile:
+        type: string
+      name:
+        type: string
+      oliveSection:
+        type: boolean
+      partnerType:
+        type: string
+      riaNumber:
+        type: integer
+      surname:
+        type: string
+      vatCode:
+        type: string
+    type: object
+  internal_adapters_http.PartnerResponse:
+    properties:
+      addedOn:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      livestockSection:
+        type: boolean
+      mobile:
+        type: string
+      name:
+        type: string
+      oliveSection:
+        type: boolean
+      partnerType:
+        type: string
+      riaNumber:
+        type: integer
+      surname:
+        type: string
+      vatCode:
+        type: string
+    type: object
+  internal_adapters_http.errorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: Espigol
+  description: REST API for managing partners and expense forecasts.
+  license:
+    name: MIT
+  title: Espigol API
+  version: "1.0"
+paths:
+  /expense-forecasts:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_adapters_http.ExpenseForecastResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: List all expense forecasts
+      tags:
+      - expense-forecasts
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: ExpenseForecast payload
+        in: body
+        name: forecast
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.ExpenseForecastRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_adapters_http.ExpenseForecastResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: Create a new expense forecast
+      tags:
+      - expense-forecasts
+  /expense-forecasts/{id}:
+    delete:
+      parameters:
+      - description: ExpenseForecast ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: Delete an expense forecast by ID
+      tags:
+      - expense-forecasts
+    get:
+      parameters:
+      - description: ExpenseForecast ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.ExpenseForecastResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: Get an expense forecast by ID
+      tags:
+      - expense-forecasts
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ExpenseForecast ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ExpenseForecast payload
+        in: body
+        name: forecast
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.ExpenseForecastRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.ExpenseForecastResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: Update an existing expense forecast
+      tags:
+      - expense-forecasts
+  /partners:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_adapters_http.PartnerResponse'
+            type: array
+      summary: List all partners
+      tags:
+      - partners
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Partner payload
+        in: body
+        name: partner
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.PartnerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_adapters_http.PartnerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: Create a new partner
+      tags:
+      - partners
+  /partners/{id}:
+    delete:
+      parameters:
+      - description: Partner ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: Delete a partner by ID
+      tags:
+      - partners
+    get:
+      parameters:
+      - description: Partner ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.PartnerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: Get a partner by ID
+      tags:
+      - partners
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Partner ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Partner payload
+        in: body
+        name: partner
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.PartnerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.PartnerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_adapters_http.errorResponse'
+      summary: Update an existing partner
+      tags:
+      - partners
+swagger: "2.0"
