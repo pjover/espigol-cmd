@@ -35,6 +35,10 @@ func (m *MockConfigService) SetTime(key string, value time.Time) error {
 	return nil
 }
 
+func (m *MockConfigService) GetFloat64(key string) float64 {
+	return 0
+}
+
 func (m *MockConfigService) Init() {
 }
 

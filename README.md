@@ -31,6 +31,8 @@ El projecte segueix l'**Arquitectura Hexagonal** (Ports i Adaptadors):
 | **Servidor HTTP**              | Inici i aturada graciosa via senyals UNIX (`SIGTERM`/`SIGINT`)                         |
 | **Cicle de vida del servidor** | Comandes CLI `server start`, `server stop`, `server status` (seguiment via fitxer PID) |
 | **Persistència**               | MongoDB via `go.mongodb.org/mongo-driver`                                              |
+| **Categoria de despesa**       | Classificació automàtica de les previsions en despesa corrent o d'inversió             |
+| **Límits de subvenció**        | Límits anuals de subvenció llegits des de `configs/espigol.yaml`                       |
 
 ---
 
@@ -148,6 +150,8 @@ make server-stop
 | `PUT`    | `/expense-forecasts/{id}` | Actualitza una previsió existent |
 | `DELETE` | `/expense-forecasts/{id}` | Elimina una previsió             |
 
+Cada previsió exposa els camps addicionals `year` (any derivat de la data prevista) i `expenseCategory` (`Despesa corrent` o `Despesa d'inversió`, derivat del subtipus de despesa).
+
 ---
 
 ## Targets del Makefile
@@ -180,11 +184,18 @@ El fitxer de configuració principal és `configs/espigol.yaml`:
 db:
   name: espigol
   server: mongodb://localhost:27017
+expenses:
+  limits:
+    "2026":
+      current: 30000
+      investment: 70000
 server:
   port: 8080
 urls:
   mongoexpress: http://localhost:8081/db/espigol
 ```
+
+Els límits de subvenció (`expenses.limits`) s'organitzen per any. Per a cada any es defineixen el màxim de **despesa corrent** (`current`) i de **despesa d'inversió** (`investment`). El sistema els llegeix dinàmicament amb `LimitsForYear(year, config)`.
 
 ---
 

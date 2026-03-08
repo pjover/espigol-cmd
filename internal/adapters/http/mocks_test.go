@@ -27,6 +27,11 @@ func (m *MockConfigService) SetString(key string, value string) error {
 	return args.Error(0)
 }
 
+func (m *MockConfigService) GetFloat64(key string) float64 {
+	args := m.Called(key)
+	return args.Get(0).(float64)
+}
+
 func (m *MockConfigService) GetTime(key string) time.Time {
 	args := m.Called(key)
 	return args.Get(0).(time.Time)

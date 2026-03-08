@@ -26,6 +26,10 @@ func (c *configService) SetString(key string, value string) error {
 	return viper.WriteConfig()
 }
 
+func (c *configService) GetFloat64(key string) float64 {
+	return viper.GetFloat64(key)
+}
+
 func (c *configService) GetTime(key string) time.Time {
 	return viper.GetTime(key)
 }

@@ -1,6 +1,11 @@
 db:
   name: espigol
   server: mongodb://localhost:27017
+expenses:
+  limits:
+    "2026":
+      current: 30000
+      investment: 70000
 server:
   port: 8080
 urls:

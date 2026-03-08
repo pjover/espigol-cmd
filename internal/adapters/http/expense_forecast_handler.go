@@ -12,16 +12,18 @@ import (
 
 // ExpenseForecastResponse is the JSON representation of an ExpenseForecast.
 type ExpenseForecastResponse struct {
-	ID             int      `json:"id"`
-	PartnerID      int      `json:"partnerId"`
-	Concept        string   `json:"concept"`
-	Description    string   `json:"description"`
-	GrossAmount    float64  `json:"grossAmount"`
-	PlannedDate    string   `json:"plannedDate"`
-	ExpenseSubtype string   `json:"expenseSubtype"`
-	Scope          string   `json:"scope"`
-	Attachments    []string `json:"attachments"`
-	AddedOn        string   `json:"addedOn"`
+	ID              int      `json:"id"`
+	PartnerID       int      `json:"partnerId"`
+	Concept         string   `json:"concept"`
+	Description     string   `json:"description"`
+	GrossAmount     float64  `json:"grossAmount"`
+	PlannedDate     string   `json:"plannedDate"`
+	Year            int      `json:"year"`
+	ExpenseSubtype  string   `json:"expenseSubtype"`
+	ExpenseCategory string   `json:"expenseCategory"`
+	Scope           string   `json:"scope"`
+	Attachments     []string `json:"attachments"`
+	AddedOn         string   `json:"addedOn"`
 }
 
 // ExpenseForecastRequest is the JSON payload for creating or updating an ExpenseForecast.
@@ -192,16 +194,18 @@ func forecastToResponse(f *model.ExpenseForecast) ExpenseForecastResponse {
 		attachments = []string{}
 	}
 	return ExpenseForecastResponse{
-		ID:             f.ID(),
-		PartnerID:      f.Partner().ID(),
-		Concept:        f.Concept(),
-		Description:    f.Description(),
-		GrossAmount:    f.GrossAmount(),
-		PlannedDate:    f.PlannedDate().Format("2006-01-02"),
-		ExpenseSubtype: string(f.ExpenseSubtype()),
-		Scope:          f.Scope().String(),
-		Attachments:    attachments,
-		AddedOn:        f.AddedOn().Format("2006-01-02"),
+		ID:              f.ID(),
+		PartnerID:       f.Partner().ID(),
+		Concept:         f.Concept(),
+		Description:     f.Description(),
+		GrossAmount:     f.GrossAmount(),
+		PlannedDate:     f.PlannedDate().Format("2006-01-02"),
+		Year:            f.Year(),
+		ExpenseSubtype:  string(f.ExpenseSubtype()),
+		ExpenseCategory: f.ExpenseCategory().String(),
+		Scope:           f.Scope().String(),
+		Attachments:     attachments,
+		AddedOn:         f.AddedOn().Format("2006-01-02"),
 	}
 }
 

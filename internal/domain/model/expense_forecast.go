@@ -87,8 +87,16 @@ func (ef *ExpenseForecast) AddedOn() time.Time {
 	return ef.addedOn
 }
 
+func (ef *ExpenseForecast) Year() int {
+	return ef.plannedDate.Year()
+}
+
+func (ef *ExpenseForecast) ExpenseCategory() ExpenseCategory {
+	return ef.expenseSubtype.Type().Category()
+}
+
 func (ef *ExpenseForecast) String() string {
-	return fmt.Sprintf("ExpenseForecast{id=%d, partnerId=%d, concept=%s, description=%s, grossAmount=%.2f, plannedDate=%s, expenseSubtype=%s, scope=%s, attachments=%v, addedOn=%s}",
+	return fmt.Sprintf("ExpenseForecast{id=%d, partnerId=%d, concept=%s, description=%s, grossAmount=%.2f, plannedDate=%s, year=%d, expenseSubtype=%s, expenseCategory=%s, scope=%s, attachments=%v, addedOn=%s}",
 		ef.id, ef.partner.ID(), ef.concept, ef.description, ef.grossAmount, ef.plannedDate.Format("2006-01-02"),
-		ef.expenseSubtype, ef.scope, ef.attachments, ef.addedOn.Format("2006-01-02"))
+		ef.Year(), ef.expenseSubtype, ef.ExpenseCategory(), ef.scope, ef.attachments, ef.addedOn.Format("2006-01-02"))
 }
