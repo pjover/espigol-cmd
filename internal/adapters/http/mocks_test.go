@@ -84,5 +84,26 @@ func (m *MockDbService) UpsertExpenseForecast(forecast *model.ExpenseForecast) e
 	return args.Error(0)
 }
 
+func (m *MockDbService) GetExpenseForecastByID(id int) (*model.ExpenseForecast, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.ExpenseForecast), args.Error(1)
+}
+
+func (m *MockDbService) GetAllExpenseForecasts() ([]*model.ExpenseForecast, error) {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.ExpenseForecast), args.Error(1)
+}
+
+func (m *MockDbService) DeleteExpenseForecast(id int) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
 // Ensure MockDbService implements ports.DbService at compile time.
 var _ ports.DbService = (*MockDbService)(nil)

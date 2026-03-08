@@ -171,3 +171,87 @@ func (d *dbService) DeletePartner(id int) error {
 
 	return nil
 }
+
+func (d *dbService) GetExpenseForecastByID(id int) (*model.ExpenseForecast, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(d.uri))
+	if err != nil {
+		return nil, fmt.Errorf("connecting to database: %w", err)
+	}
+	defer client.Disconnect(context.Background())
+
+	coll := client.Database(d.database).Collection("expense_forecast")
+	var result dbo.ExpenseForecast
+	err = coll.FindOne(ctx, bson.M{"_id": id}).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("expense forecast with ID %d not found", id)
+		}
+		return nil, fmt.Errorf("finding expense forecast by ID: %w", err)
+	}
+
+	partner, err := d.GetPartnerByID(result.PartnerId)
+	if err != nil {
+		return nil, fmt.Errorf("finding partner for expense forecast: %w", err)
+	}
+
+	return dbo.ConvertExpenseForecastToModel(result, partner), nil
+}
+
+func (d *dbService) GetAllExpenseForecasts() ([]*model.ExpenseForecast, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(d.uri))
+	if err != nil {
+		return nil, fmt.Errorf("connecting to database: %w", err)
+	}
+	defer client.Disconnect(context.Background())
+
+	coll := client.Database(d.database).Collection("expense_forecast")
+	cursor, err := coll.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, fmt.Errorf("finding all expense forecasts: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var forecasts []*model.ExpenseForecast
+	for cursor.Next(ctx) {
+		var result dbo.ExpenseForecast
+		if err := cursor.Decode(&result); err != nil {
+			return nil, fmt.Errorf("decoding expense forecast: %w", err)
+		}
+		partner, err := d.GetPartnerByID(result.PartnerId)
+		if err != nil {
+			return nil, fmt.Errorf("finding partner for expense forecast %d: %w", result.Id, err)
+		}
+		forecasts = append(forecasts, dbo.ConvertExpenseForecastToModel(result, partner))
+	}
+
+	return forecasts, nil
+}
+
+func (d *dbService) DeleteExpenseForecast(id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(d.uri))
+	if err != nil {
+		return fmt.Errorf("connecting to database: %w", err)
+	}
+	defer client.Disconnect(context.Background())
+
+	coll := client.Database(d.database).Collection("expense_forecast")
+	res, err := coll.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		return fmt.Errorf("deleting expense forecast: %w", err)
+	}
+
+	if res.DeletedCount == 0 {
+		return fmt.Errorf("expense forecast with ID %d not found", id)
+	}
+
+	return nil
+}

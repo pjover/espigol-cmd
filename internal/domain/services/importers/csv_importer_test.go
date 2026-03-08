@@ -48,6 +48,18 @@ func (m *MockDbService) DeletePartner(id int) error {
 	return nil
 }
 
+func (m *MockDbService) GetExpenseForecastByID(id int) (*model.ExpenseForecast, error) {
+	return nil, nil
+}
+
+func (m *MockDbService) GetAllExpenseForecasts() ([]*model.ExpenseForecast, error) {
+	return nil, nil
+}
+
+func (m *MockDbService) DeleteExpenseForecast(id int) error {
+	return nil
+}
+
 func TestImportPartners(t *testing.T) {
 	tmpDir := t.TempDir()
 	csvPath := filepath.Join(tmpDir, "test_partners.csv")

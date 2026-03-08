@@ -28,6 +28,7 @@ func NewHttpServer(config ports.ConfigService, db ports.DbService) ports.Server 
 
 	// Register resource handlers
 	NewPartnerHandler(db).RegisterRoutes(mux)
+	NewExpenseForecastHandler(db).RegisterRoutes(mux)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),

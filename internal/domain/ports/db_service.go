@@ -22,4 +22,13 @@ type DbService interface {
 
 	// UpsertExpenseForecast inserts or updates an expense forecast in the database.
 	UpsertExpenseForecast(forecast *model.ExpenseForecast) error
+
+	// GetExpenseForecastByID retrieves an expense forecast by its numeric ID.
+	GetExpenseForecastByID(id int) (*model.ExpenseForecast, error)
+
+	// GetAllExpenseForecasts retrieves all expense forecasts.
+	GetAllExpenseForecasts() ([]*model.ExpenseForecast, error)
+
+	// DeleteExpenseForecast deletes an expense forecast by its numeric ID.
+	DeleteExpenseForecast(id int) error
 }
