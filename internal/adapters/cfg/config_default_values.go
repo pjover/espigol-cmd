@@ -10,4 +10,3 @@ var defaultValues = map[string]interface{}{
 	"output.directory":                "~/espigol",
 	"server.port":                     "8080",
 }
- 

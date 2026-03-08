@@ -79,6 +79,11 @@ func (s *ExpenseForecastReportService) ExpenseForecastReport(year int) (bool, st
 			warnSub := s.buildWarningSubReport(cat, year, availableForSections, oliveTotal, livestockTotal, partners)
 			subReports = append(subReports, warnSub)
 		}
+
+		// Page break between categories (not after the last one)
+		if cat != model.ExpenseCategoryInvestment {
+			subReports = append(subReports, NewPageBreak())
+		}
 	}
 
 	def := ReportDefinition{
@@ -123,9 +128,13 @@ func (s *ExpenseForecastReportService) buildCommonSubReport(
 		scopeLabel := ""
 		if i == 0 {
 			scopeLabel = f.Scope().String()
+			rows = append(rows, RowDef{
+				Cells: []string{scopeLabel, "", ""},
+				Bold:  true,
+			})
 		}
 		rows = append(rows, RowDef{
-			Cells: []string{scopeLabel, f.Concept(), formatEuro(f.GrossAmount())},
+			Cells: []string{"", f.Concept(), formatEuro(f.GrossAmount())},
 		})
 		total += f.GrossAmount()
 	}
@@ -176,11 +185,13 @@ func (s *ExpenseForecastReportService) buildSectionsSubReport(
 			scopeLabel := ""
 			if i == 0 {
 				scopeLabel = f.Scope().String()
+				rows = append(rows, RowDef{
+					Cells: []string{scopeLabel, "", ""},
+					Bold:  true,
+				})
 			}
-			bold := i == 0
 			rows = append(rows, RowDef{
-				Cells: []string{scopeLabel, f.Concept(), formatEuro(f.GrossAmount())},
-				Bold:  bold,
+				Cells: []string{"", f.Concept(), formatEuro(f.GrossAmount())},
 			})
 			sectionTotal += f.GrossAmount()
 		}
@@ -214,7 +225,7 @@ func (s *ExpenseForecastReportService) buildRemainderSubReport(
 	commonTotal float64,
 	sectionsTotal float64,
 ) (SubReport, float64) {
-	title := fmt.Sprintf("Remanent de %s", cat.String())
+	title := fmt.Sprintf("Remanent de %s", strings.ToLower(cat.String()))
 	availableForSections := limit - commonTotal
 	categoryTotal := commonTotal + sectionsTotal
 	remainder := limit - categoryTotal
@@ -226,7 +237,7 @@ func (s *ExpenseForecastReportService) buildRemainderSubReport(
 		{Cells: []string{"Disponible per seccions", formatEuro(availableForSections)}},
 		{Cells: []string{"Total seccions", formatEuro(sectionsTotal)}},
 		{Cells: []string{fmt.Sprintf("Total %s", strings.ToLower(cat.String())), formatEuro(categoryTotal)}},
-		{Cells: []string{"Remanent", formatEuro(remainder)}, Bold: true},
+		{Cells: []string{fmt.Sprintf("Remanent de %s", strings.ToLower(cat.String())), formatEuro(remainder)}, Bold: true},
 	}
 
 	return CustomTableSubReport{

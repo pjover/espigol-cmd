@@ -19,6 +19,15 @@ type SubReport interface {
 	Render(m pdf.Maroto)
 }
 
+// pageBreakSubReport is a sentinel SubReport that forces a new page.
+type pageBreakSubReport struct{}
+
+// NewPageBreak returns a SubReport that inserts a page break when rendered.
+func NewPageBreak() SubReport { return pageBreakSubReport{} }
+
+func (pageBreakSubReport) GetTitle() string    { return "" }
+func (pageBreakSubReport) Render(m pdf.Maroto) { m.AddPage() }
+
 // ReportDefinition describes the full report to be rendered.
 type ReportDefinition struct {
 	PageOrientation consts.Orientation
