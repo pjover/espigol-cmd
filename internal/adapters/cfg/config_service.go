@@ -78,7 +78,7 @@ func (c *configService) readConfigFile() {
 }
 
 func (c *configService) loadDefaultConfig(home string) {
-	viper.SetDefault("db.server", "mongodb://localhost:27017")
-	viper.SetDefault("db.name", "espigol")
-	viper.SetDefault("server.port", "8080")
+	for key, value := range defaultValues {
+		viper.SetDefault(key, value)
+	}
 }
