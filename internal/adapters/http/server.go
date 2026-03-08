@@ -15,7 +15,7 @@ type server struct {
 	config     ports.ConfigService
 }
 
-func NewServer(config ports.ConfigService, db ports.DbService) ports.Server {
+func NewHttpServer(config ports.ConfigService, db ports.DbService) ports.Server {
 	port := config.GetString("server.port")
 
 	mux := http.NewServeMux()

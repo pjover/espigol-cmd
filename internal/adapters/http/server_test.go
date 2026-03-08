@@ -14,7 +14,7 @@ func TestNewServer(t *testing.T) {
 	mockDb := new(MockDbService)
 	mockConfig.On("GetString", "server.port").Return("0")
 
-	srv := httpAdapter.NewServer(mockConfig, mockDb)
+	srv := httpAdapter.NewHttpServer(mockConfig, mockDb)
 	assert.NotNil(t, srv)
 
 	errChan := make(chan error, 1)
