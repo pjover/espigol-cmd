@@ -1,6 +1,6 @@
 MODULE=github.com/pjover/espigol
 
-.PHONY: format build run tidy import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test init-db server-start server-stop server-status
+.PHONY: format build run tidy swag-init import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test init-db server-start server-stop server-status
 
 format:
 	go fmt ./...
@@ -14,6 +14,9 @@ run: build
 
 tidy:
 	go mod tidy
+
+swag-init: ## Regenerate OpenAPI docs from Swaggo annotations (output: docs/)
+	swag init -g cmd/espigol/main.go --parseDependency --output docs
 
 import-partners:
 	$(eval CSVPATH=$(if $(CSV),$(CSV),private/CSV/partners.csv))

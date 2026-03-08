@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pjover/espigol/internal/domain/ports"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type server struct {
@@ -29,6 +30,9 @@ func NewHttpServer(config ports.ConfigService, db ports.DbService) ports.Server 
 	// Register resource handlers
 	NewPartnerHandler(db).RegisterRoutes(mux)
 	NewExpenseForecastHandler(db).RegisterRoutes(mux)
+
+	// Swagger UI at /swagger/index.html
+	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
