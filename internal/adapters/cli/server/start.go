@@ -1,21 +1,26 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/pjover/espigol/internal/adapters/cli"
+	"github.com/pjover/espigol/internal/domain/ports"
 	"github.com/spf13/cobra"
 )
 
 type startCmd struct {
-	cmd *cobra.Command
+	cmd    *cobra.Command
+	server ports.Server
 }
 
-func NewStartCmd() cli.Cmd {
-	c := &startCmd{}
+func NewStartCmd(server ports.Server) cli.Cmd {
+	c := &startCmd{
+		server: server,
+	}
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start the REST API server",
@@ -47,15 +52,26 @@ func (c *startCmd) run(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Starting espigol server (PID: %d)...\n", pid)
 
-	// Block until signal is received to simulate daemon/server running
+	// Start HTTP server in a separate goroutine
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- c.server.Start()
+	}()
+
+	// Block until signal is received or server fails
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// In Phase 2, this is where the HTTP server starts.
-	// For now, it's just blocking.
-
-	<-sigChan
-	fmt.Println("\nStopping espigol server...")
+	select {
+	case err := <-errChan:
+		removePidFile()
+		return fmt.Errorf("server crashed: %w", err)
+	case <-sigChan:
+		fmt.Println("\nStopping espigol server...")
+		if err := c.server.Stop(context.Background()); err != nil {
+			fmt.Printf("Error stopping server: %v\n", err)
+		}
+	}
 
 	removePidFile()
 	return nil

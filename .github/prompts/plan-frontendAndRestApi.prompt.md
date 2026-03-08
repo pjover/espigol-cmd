@@ -40,20 +40,16 @@ This is a comprehensive plan to add a REST API server to `espigol`, adhering to 
    - Create the HTTP adapter backbone in `internal/adapters/http/server.go` that initializes a `net/http` `ServerMux`.
    - Wire this into the `start` command from Phase 1.
    - *Commit:* `feat(http): initialize net/http multiplexer adapter`
-2. **Implement Google Auth Middleware**
-   - Create `internal/adapters/http/middleware.go` to validate Google JWT tokens passed in the `Authorization` header.
-   - Write anonymous unit tests with mock HTTP requests to verify header parsing and 401 Unauthorized responses.
-   - *Commit:* `feat(http): add Google Auth JWT verification middleware`
-3. **Implement CRUD Handlers for Partners**
+2. **Implement CRUD Handlers for Partners**
    - Create `internal/adapters/http/partner_handler.go` defining `GET`, `POST`, `PUT`, `DELETE` routes for `Partners`.
    - Use `testify/mock` to map requests to existing domain layer services. Provide exhaustive handler anonymous unit tests (checking correct status codes like 200, 201, 400, 404).
    - Add Swaggo `@Summary` comments to all methods.
    - *Commit:* `feat(api): add REST endpoints for Partner entity`
-4. **Implement CRUD Handlers for Expense Forecasts**
+3. **Implement CRUD Handlers for Expense Forecasts**
    - Create `internal/adapters/http/expense_forecast_handler.go`.
    - Implement handlers, mock testing setup, and Swaggo annotations just like Partners.
    - *Commit:* `feat(api): add REST endpoints for ExpenseForecast entity`
-5. **Generate API Documentation**
+4. **Generate API Documentation**
    - Run `swag init` to generate the `docs/` folder. Apply an HTTP handler (`http-swagger`) to serve the UI at `/swagger/index.html`.
    - *Commit:* `docs: generate and serve OpenAPI swagger docs`
 

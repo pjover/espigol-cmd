@@ -1,5 +1,7 @@
 db:
   name: espigol
   server: mongodb://localhost:27017
+server:
+  port: 8080
 urls:
   mongoexpress: http://localhost:8081/db/espigol
