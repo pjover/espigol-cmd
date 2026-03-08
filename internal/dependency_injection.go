@@ -22,11 +22,14 @@ func InjectDependencies() ports.CommandManager {
 	// 2. Command Manager (CLI)
 	cmdManager := cli.NewCommandManager(configService)
 
-	// 3. Importers
-	importersDI(cmdManager, configService)
+	// 3. DB Service (shared)
+	dbService := mongodb.NewDbService(configService)
 
-	// 4. Server Commands
-	httpServer := httpAdapter.NewServer(configService)
+	// 4. Importers
+	importersDI(cmdManager, dbService)
+
+	// 5. Server Commands
+	httpServer := httpAdapter.NewServer(configService, dbService)
 
 	serverCmd := server.NewServerCmd(
 		server.NewStartCmd(httpServer),
@@ -38,8 +41,7 @@ func InjectDependencies() ports.CommandManager {
 	return cmdManager
 }
 
-func importersDI(cmdManager ports.CommandManager, configService ports.ConfigService) {
-	dbService := mongodb.NewDbService(configService)
+func importersDI(cmdManager ports.CommandManager, dbService ports.DbService) {
 	importService := importers.NewCsvImporter(dbService)
 
 	importPartnersCmd := csv.NewImportPartnersCsvCmd(importService)

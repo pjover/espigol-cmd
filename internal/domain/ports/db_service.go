@@ -7,6 +7,15 @@ type DbService interface {
 	// UpsertPartner inserts or updates a partner in the database.
 	UpsertPartner(partner *model.Partner) error
 
+	// GetPartnerByID retrieves a partner by its numeric ID.
+	GetPartnerByID(id int) (*model.Partner, error)
+
+	// GetAllPartners retrieves all partners.
+	GetAllPartners() ([]*model.Partner, error)
+
+	// DeletePartner deletes a partner by its numeric ID.
+	DeletePartner(id int) error
+
 	// FindPartnerByEmail retrieves a partner by its email address.
 	// Returns error if partner is not found.
 	FindPartnerByEmail(email string) (*model.Partner, error)

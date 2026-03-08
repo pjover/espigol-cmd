@@ -15,7 +15,7 @@ type server struct {
 	config     ports.ConfigService
 }
 
-func NewServer(config ports.ConfigService) ports.Server {
+func NewServer(config ports.ConfigService, db ports.DbService) ports.Server {
 	port := config.GetString("server.port")
 
 	mux := http.NewServeMux()
@@ -25,6 +25,9 @@ func NewServer(config ports.ConfigService) ports.Server {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+
+	// Register resource handlers
+	NewPartnerHandler(db).RegisterRoutes(mux)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
