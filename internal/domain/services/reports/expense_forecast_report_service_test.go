@@ -434,3 +434,193 @@ func TestBuildPartnersSubReport_WithExcess(t *testing.T) {
 		t.Errorf("expected 2 rows in adjustment table, got %d", len(adjTable.Rows))
 	}
 }
+
+func newNamedTestPartner(id int, name, surname string, oliveSection, livestockSection bool) *model.Partner {
+	return model.NewPartner(id, name, surname, "00000000A",
+		"test@test.com", "+34600000000",
+		model.Producer, 0, oliveSection, livestockSection,
+		time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC))
+}
+
+func newTestForecastForPartner(id, year int, partner model.Partner, subtype model.ExpenseSubtype, scope model.ExpenseScope, amount float64, concept string) *model.ExpenseForecast {
+	return model.NewExpenseForecast(
+		id, partner, concept, "description", amount,
+		time.Date(year, 6, 15, 0, 0, 0, 0, time.UTC),
+		subtype, scope, []string{}, time.Now(),
+	)
+}
+
+func TestForecastCode(t *testing.T) {
+	tests := []struct {
+		year, id int
+		expected string
+	}{
+		{2026, 35, "CP26035"},
+		{2026, 1, "CP26001"},
+		{2025, 999, "CP25999"},
+		{2026, 0, "CP26000"},
+	}
+	for _, tt := range tests {
+		got := forecastCode(tt.year, tt.id)
+		if got != tt.expected {
+			t.Errorf("forecastCode(%d, %d) = %q, want %q", tt.year, tt.id, got, tt.expected)
+		}
+	}
+}
+
+func TestPartnerSectionName(t *testing.T) {
+	p1 := newNamedTestPartner(1, "Pau", "Bosch", true, false)
+	if got := partnerSectionName(p1); got != model.ExpenseScopeOliveSection.String() {
+		t.Errorf("got %q, want olive section", got)
+	}
+	p2 := newNamedTestPartner(2, "Maria", "Cortès", false, true)
+	if got := partnerSectionName(p2); got != model.ExpenseScopeLivestockSection.String() {
+		t.Errorf("got %q, want livestock section", got)
+	}
+	p3 := newNamedTestPartner(3, "Alex", "Cuesta", true, true)
+	expected := model.ExpenseScopeOliveSection.String() + ", " + model.ExpenseScopeLivestockSection.String()
+	if got := partnerSectionName(p3); got != expected {
+		t.Errorf("got %q, want %q", got, expected)
+	}
+}
+
+func TestBuildPartnerDetailSubReports_NoCap(t *testing.T) {
+	p1 := newNamedTestPartner(1, "Pau", "Bosch", true, false)
+	p2 := newNamedTestPartner(2, "Maria", "Cortès", false, true)
+
+	forecasts := []*model.ExpenseForecast{
+		newTestForecastForPartner(10, 2026, *p1, model.ExpenseSubtypeA1, model.ExpenseScopePartner, 1000, "Concepte A"),
+		newTestForecastForPartner(11, 2026, *p1, model.ExpenseSubtypeA2, model.ExpenseScopePartner, 2000, "Concepte B"),
+		newTestForecastForPartner(12, 2026, *p2, model.ExpenseSubtypeA1, model.ExpenseScopePartner, 1500, "Concepte C"),
+	}
+
+	allocations := []partnerAllocation{
+		{partnerID: 1, partnerName: "Pau Bosch", requested: 3000, allocated: 3000},
+		{partnerID: 2, partnerName: "Maria Cortès", requested: 1500, allocated: 1500},
+	}
+
+	svc := NewExpenseForecastReportService(newTestConfig(30000, 70000), &stubDb{})
+	subs := svc.buildPartnerDetailSubReports(model.ExpenseCategoryCurrent, 2026, forecasts, allocations)
+
+	if len(subs) != 2 {
+		t.Fatalf("expected 2 partner detail sub-reports, got %d", len(subs))
+	}
+
+	// Partners should be sorted by name: Maria < Pau
+	table1 := subs[0].(CustomTableSubReport)
+	if table1.Title != "Maria Cortès" {
+		t.Errorf("first detail title = %q, want 'Maria Cortès'", table1.Title)
+	}
+	// Maria: 1 forecast + 1 total = 2 rows (no cap row)
+	if len(table1.Rows) != 2 {
+		t.Errorf("expected 2 rows for Maria, got %d", len(table1.Rows))
+	}
+
+	table2 := subs[1].(CustomTableSubReport)
+	if table2.Title != "Pau Bosch" {
+		t.Errorf("second detail title = %q, want 'Pau Bosch'", table2.Title)
+	}
+	// Pau: 2 forecasts + 1 total = 3 rows (no cap row)
+	if len(table2.Rows) != 3 {
+		t.Errorf("expected 3 rows for Pau, got %d", len(table2.Rows))
+	}
+
+	// Check CP codes
+	if table1.Rows[0].Cells[0] != "CP26012" {
+		t.Errorf("Maria's CP = %s, want CP26012", table1.Rows[0].Cells[0])
+	}
+
+}
+
+func TestBuildPartnerDetailSubReports_WithCap(t *testing.T) {
+	p1 := newNamedTestPartner(1, "Pau", "Bosch", true, false)
+
+	forecasts := []*model.ExpenseForecast{
+		newTestForecastForPartner(10, 2026, *p1, model.ExpenseSubtypeA1, model.ExpenseScopePartner, 5000, "Concepte A"),
+		newTestForecastForPartner(11, 2026, *p1, model.ExpenseSubtypeA2, model.ExpenseScopePartner, 3000, "Concepte B"),
+	}
+
+	allocations := []partnerAllocation{
+		{partnerID: 1, partnerName: "Pau Bosch", requested: 8000, allocated: 5000},
+	}
+
+	svc := NewExpenseForecastReportService(newTestConfig(30000, 70000), &stubDb{})
+	subs := svc.buildPartnerDetailSubReports(model.ExpenseCategoryCurrent, 2026, forecasts, allocations)
+
+	if len(subs) != 1 {
+		t.Fatalf("expected 1 detail sub-report, got %d", len(subs))
+	}
+
+	table := subs[0].(CustomTableSubReport)
+	// 2 forecasts + 1 total + 1 max authorized = 4 rows
+	if len(table.Rows) != 4 {
+		t.Errorf("expected 4 rows for capped partner, got %d", len(table.Rows))
+	}
+
+	if table.Rows[0].Color != nil {
+		t.Error("capped forecast row should have default (black) color")
+	}
+
+	// Last row should be "Import màxim autoritzat"
+	lastRow := table.Rows[3]
+	if lastRow.Color == nil {
+		t.Error("max authorized row should have red color")
+	}
+	if lastRow.Cells[1] != "Import màxim autoritzat" {
+		t.Errorf("last row label = %q, want 'Import màxim autoritzat'", lastRow.Cells[1])
+	}
+	if lastRow.Cells[2] != formatEuro(5000) {
+		t.Errorf("max authorized = %s, want %s", lastRow.Cells[2], formatEuro(5000))
+	}
+	// Should have 3 columns (no expense type)
+	if len(table.Headers) != 3 {
+		t.Errorf("expected 3 headers, got %d", len(table.Headers))
+	}
+}
+
+func TestBuildScopeDetailSubReports(t *testing.T) {
+	forecasts := []*model.ExpenseForecast{
+		newTestForecast(1, 2026, model.ExpenseSubtypeA1, model.ExpenseScopeCommon, 5000, "Common expense"),
+		newTestForecast(2, 2026, model.ExpenseSubtypeA1, model.ExpenseScopeCommon, 3000, "Another common"),
+		newTestForecast(3, 2026, model.ExpenseSubtypeA1, model.ExpenseScopeOliveSection, 2000, "Olive expense"),
+	}
+
+	svc := NewExpenseForecastReportService(newTestConfig(30000, 70000), &stubDb{})
+	subs := svc.buildScopeDetailSubReports(model.ExpenseCategoryCurrent, 2026, forecasts)
+
+	if len(subs) != 2 {
+		t.Fatalf("expected 2 scope detail sub-reports (common + olive), got %d", len(subs))
+	}
+
+	// First should be Common
+	commonTable := subs[0].(CustomTableSubReport)
+	if !strings.Contains(commonTable.Title, "Comú") {
+		t.Errorf("common title = %q, should contain 'Comú'", commonTable.Title)
+	}
+	// 2 expense rows + 1 total = 3 rows
+	if len(commonTable.Rows) != 3 {
+		t.Errorf("expected 3 rows for common, got %d", len(commonTable.Rows))
+	}
+	// Check CP code
+	if commonTable.Rows[0].Cells[0] != "CP26002" {
+		t.Errorf("first common CP = %s, want CP26002", commonTable.Rows[0].Cells[0])
+	}
+	// Check total
+	if commonTable.Rows[2].Cells[2] != formatEuro(8000) {
+		t.Errorf("common total = %s, want %s", commonTable.Rows[2].Cells[2], formatEuro(8000))
+	}
+	// 3 columns
+	if len(commonTable.Headers) != 3 {
+		t.Errorf("expected 3 headers, got %d", len(commonTable.Headers))
+	}
+
+	// Second should be Olive
+	oliveTable := subs[1].(CustomTableSubReport)
+	if !strings.Contains(oliveTable.Title, "oliva") {
+		t.Errorf("olive title = %q, should contain 'oliva'", oliveTable.Title)
+	}
+	// 1 expense row + 1 total = 2 rows
+	if len(oliveTable.Rows) != 2 {
+		t.Errorf("expected 2 rows for olive, got %d", len(oliveTable.Rows))
+	}
+}

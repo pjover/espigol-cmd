@@ -91,6 +91,22 @@ func (s *ExpenseForecastReportService) ExpenseForecastReport(year int) (bool, st
 			subReports = append(subReports, sub)
 		}
 
+		// Page break and section heading before detail tables
+		subReports = append(subReports, NewPageBreak())
+		subReports = append(subReports, NewSectionTitle("Detall per secció i soci"))
+
+		// Add per-item detail sections for common and section scopes
+		scopeDetails := s.buildScopeDetailSubReports(cat, year, yearForecasts)
+		for _, sub := range scopeDetails {
+			subReports = append(subReports, sub)
+		}
+
+		// Add per-partner detail sections
+		partnerDetails := s.buildPartnerDetailSubReports(cat, year, yearForecasts, allocations)
+		for _, sub := range partnerDetails {
+			subReports = append(subReports, sub)
+		}
+
 		// Page break between categories (not after the last one)
 		if cat != model.ExpenseCategoryInvestment {
 			subReports = append(subReports, NewPageBreak())
@@ -105,7 +121,7 @@ func (s *ExpenseForecastReportService) ExpenseForecastReport(year int) (bool, st
 	}
 
 	outputDir := expandOutputDir(s.config.GetString("output.directory"))
-	filePath := path.Join(outputDir, fmt.Sprintf("Despeses %d.pdf", year))
+	filePath := path.Join(outputDir, fmt.Sprintf("Previsions de despeses %d.pdf", year))
 
 	renderer := NewReportPdf(s.config)
 	if err := renderer.SaveToFile(def, filePath); err != nil {
@@ -554,6 +570,185 @@ func (s *ExpenseForecastReportService) buildPartnerAdjustmentSubReport(
 		Headers: []string{"Soci", "Sol·licitat", "Assignat"},
 		Rows:    rows,
 	}
+}
+
+// partnerSectionName returns the section name(s) for a partner.
+func partnerSectionName(p *model.Partner) string {
+	var sections []string
+	if p.OliveSection() {
+		sections = append(sections, model.ExpenseScopeOliveSection.String())
+	}
+	if p.LivestockSection() {
+		sections = append(sections, model.ExpenseScopeLivestockSection.String())
+	}
+	if len(sections) == 0 {
+		return ""
+	}
+	return strings.Join(sections, ", ")
+}
+
+// forecastCode generates the CP code: "CP" + last 2 year digits + ID with 3 digits.
+func forecastCode(year, id int) string {
+	return fmt.Sprintf("CP%02d%03d", year%100, id)
+}
+
+// buildScopeDetailSubReports builds per-item detail tables for common and section scopes.
+func (s *ExpenseForecastReportService) buildScopeDetailSubReports(
+	cat model.ExpenseCategory,
+	year int,
+	forecasts []*model.ExpenseForecast,
+) []SubReport {
+	scopes := []model.ExpenseScope{
+		model.ExpenseScopeCommon,
+		model.ExpenseScopeOliveSection,
+		model.ExpenseScopeLivestockSection,
+	}
+
+	var subReports []SubReport
+	for _, scope := range scopes {
+		var filtered []*model.ExpenseForecast
+		for _, f := range forecasts {
+			if f.ExpenseCategory() == cat && f.Scope() == scope {
+				filtered = append(filtered, f)
+			}
+		}
+		if len(filtered) == 0 {
+			continue
+		}
+		sort.Slice(filtered, func(i, j int) bool {
+			return filtered[i].Concept() < filtered[j].Concept()
+		})
+
+		title := fmt.Sprintf("%s - %s", scope.String(), cat.String())
+		var rows []RowDef
+		var total float64
+		for _, f := range filtered {
+			rows = append(rows, RowDef{
+				Cells: []string{
+					forecastCode(year, f.ID()),
+					f.Concept(),
+					formatEuro(f.GrossAmount()),
+				},
+			})
+			total += f.GrossAmount()
+		}
+		rows = append(rows, RowDef{
+			Cells: []string{"", "Total", formatEuro(total)},
+			Bold:  true,
+		})
+
+		subReports = append(subReports, CustomTableSubReport{
+			Title:   title,
+			Widths:  []uint{2, 7, 3},
+			Headers: []string{"CP", "Concepte", "Brut"},
+			Rows:    rows,
+		})
+	}
+
+	return subReports
+}
+
+// buildPartnerDetailSubReports builds per-partner detail tables for a category.
+// Each partner with forecasts gets a section with their individual expense lines.
+func (s *ExpenseForecastReportService) buildPartnerDetailSubReports(
+	cat model.ExpenseCategory,
+	year int,
+	forecasts []*model.ExpenseForecast,
+	allocations []partnerAllocation,
+) []SubReport {
+	// Build allocation lookup
+	allocMap := map[int]*partnerAllocation{}
+	for i := range allocations {
+		allocMap[allocations[i].partnerID] = &allocations[i]
+	}
+
+	// Group forecasts by partner
+	type partnerForecasts struct {
+		partner   *model.Partner
+		forecasts []*model.ExpenseForecast
+	}
+	partnerMap := map[int]*partnerForecasts{}
+	var partnerOrder []int
+
+	for _, f := range forecasts {
+		if f.ExpenseCategory() != cat || f.Scope() != model.ExpenseScopePartner {
+			continue
+		}
+		pID := f.Partner().ID()
+		if _, ok := partnerMap[pID]; !ok {
+			partnerMap[pID] = &partnerForecasts{partner: f.Partner()}
+			partnerOrder = append(partnerOrder, pID)
+		}
+		partnerMap[pID].forecasts = append(partnerMap[pID].forecasts, f)
+	}
+
+	if len(partnerOrder) == 0 {
+		return nil
+	}
+
+	// Sort partners by name
+	sort.Slice(partnerOrder, func(i, j int) bool {
+		pi := partnerMap[partnerOrder[i]].partner
+		pj := partnerMap[partnerOrder[j]].partner
+		ni := pi.Name() + " " + pi.Surname()
+		nj := pj.Name() + " " + pj.Surname()
+		return ni < nj
+	})
+
+	var subReports []SubReport
+	redColor := &color.Color{Red: 200, Green: 0, Blue: 0}
+
+	for _, pID := range partnerOrder {
+		pf := partnerMap[pID]
+		p := pf.partner
+		alloc := allocMap[pID]
+		isCapped := alloc != nil && alloc.allocated < alloc.requested
+
+		title := p.Name() + " " + p.Surname()
+
+		// Sort forecasts by concept
+		sort.Slice(pf.forecasts, func(i, j int) bool {
+			return pf.forecasts[i].Concept() < pf.forecasts[j].Concept()
+		})
+
+		var rows []RowDef
+		var total float64
+		for _, f := range pf.forecasts {
+			row := RowDef{
+				Cells: []string{
+					forecastCode(year, f.ID()),
+					f.Concept(),
+					formatEuro(f.GrossAmount()),
+				},
+			}
+			rows = append(rows, row)
+			total += f.GrossAmount()
+		}
+
+		// Total row
+		rows = append(rows, RowDef{
+			Cells: []string{"", "Total", formatEuro(total)},
+			Bold:  true,
+		})
+
+		// If capped, add the max authorized amount
+		if isCapped {
+			rows = append(rows, RowDef{
+				Cells: []string{"", "Import màxim autoritzat", formatEuro(alloc.allocated)},
+				Bold:  true,
+				Color: redColor,
+			})
+		}
+
+		subReports = append(subReports, CustomTableSubReport{
+			Title:   title,
+			Widths:  []uint{2, 7, 3},
+			Headers: []string{"CP", "Concepte", "Brut"},
+			Rows:    rows,
+		})
+	}
+
+	return subReports
 }
 
 // formatEuro formats a float as European currency: "31.900,00 €".
