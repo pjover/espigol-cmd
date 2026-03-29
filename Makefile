@@ -1,6 +1,6 @@
 MODULE=github.com/pjover/espigol
 
-.PHONY: format build run tidy swag-init import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test init-db server-start server-stop server-status
+.PHONY: format build run tidy swag-init import-partners import-expense-forecasts-common import-expense-forecasts-partners up down test init-db server-start server-stop server-status generate-expense-forecast-report
 
 format:
 	go fmt ./...
@@ -60,3 +60,6 @@ init-db:
 
 test:
 	go test ./...
+
+generate-expense-forecast-report: build ## Generate expense categories PDF report for YEAR (default: current year)
+	./bin/espigol generate expense-forecast-report $(if $(YEAR),--year=$(YEAR),)

@@ -5,12 +5,14 @@ import (
 
 	"github.com/pjover/espigol/internal/adapters/cfg"
 	"github.com/pjover/espigol/internal/adapters/cli"
+	"github.com/pjover/espigol/internal/adapters/cli/generate"
 	csv "github.com/pjover/espigol/internal/adapters/cli/importers/csv"
 	"github.com/pjover/espigol/internal/adapters/cli/server"
 	httpAdapter "github.com/pjover/espigol/internal/adapters/http"
 	"github.com/pjover/espigol/internal/adapters/mongodb"
 	"github.com/pjover/espigol/internal/domain/ports"
 	importers "github.com/pjover/espigol/internal/domain/services/importers"
+	"github.com/pjover/espigol/internal/domain/services/reports"
 )
 
 func InjectDependencies() ports.CommandManager {
@@ -41,6 +43,13 @@ func InjectDependencies() ports.CommandManager {
 		server.NewStatusCmd(),
 	)
 	cmdManager.AddCommand(serverCmd)
+
+	// 6. Generate commands
+	generateService := reports.NewExpenseForecastReportService(configService, dbService)
+	generateCmd := generate.NewGenerateCmd(
+		generate.NewExpenseForecastReportCmd(generateService),
+	)
+	cmdManager.AddCommand(generateCmd)
 
 	return cmdManager
 }

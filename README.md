@@ -32,7 +32,7 @@ El projecte segueix l'**Arquitectura Hexagonal** (Ports i Adaptadors):
 | **Cicle de vida del servidor** | Comandes CLI `server start`, `server stop`, `server status` (seguiment via fitxer PID) |
 | **Persistència**               | MongoDB via `go.mongodb.org/mongo-driver`                                              |
 | **Categoria de despesa**       | Classificació automàtica de les previsions en despesa corrent o d'inversió             |
-| **Límits de subvenció**        | Límits anuals de subvenció llegits des de `configs/espigol.yaml`                       |
+| **Límits de subvenció**        | Límits anuals de subvenció llegits des de `config/espigol.yaml`                        |
 
 ---
 
@@ -97,6 +97,24 @@ make import-expense-forecasts-partners
 ./bin/espigol import expense-forecasts --file=ruta/al/fitxer.csv
 ```
 
+### Generació d'informes
+
+```bash
+# Generar l'informe PDF de previsions de despeses per a l'any en curs
+make generate-expense-forecast-report
+
+# Generar l'informe per a un any concret
+make generate-expense-forecast-report YEAR=2026
+
+# O directament amb la CLI
+./bin/espigol generate expense-forecast-report
+./bin/espigol generate expense-forecast-report --year=2026
+```
+
+L'informe es desa a `output.directory` (per defecte `~/espigol/reports`) amb el nom `Despeses YYYY.pdf`. Si alguna categoria presenta un romanent negatiu, s'inclou un apartat d'ajust proporcional i el procés retorna codi de sortida diferent de zero.
+
+---
+
 ### Gestió del servidor REST
 
 ```bash
@@ -124,7 +142,7 @@ make server-stop
 | **Swagger JSON**  | http://localhost:8080/swagger/doc.json   | Especificació OpenAPI 2.0         |
 | **Mongo Express** | http://localhost:8081/db/espigol         | Interfície web de MongoDB         |
 
-> Els ports es configuren a `configs/espigol.yaml`.
+> Els ports es configuren a `config/espigol.yaml`.
 
 ---
 
@@ -171,16 +189,17 @@ make import-expense-forecasts-common [CSV=path]   # Importa despeses comunes
 make import-expense-forecasts-partners [CSV=path] # Importa despeses per soci
 make server-start                   # Inicia el servidor REST
 make server-stop                    # Atura el servidor REST
-make server-status                  # Comprova l'estat del servidor REST
-```
+make server-status                  # Comprova l'estat del servidor REST make generate-expense-forecast-report [YEAR=YYYY]  # Genera l'informe PDF de despeses```
 
 ---
 
 ## Configuració
 
-El fitxer de configuració principal és `configs/espigol.yaml`:
+El fitxer de configuració principal és `config/espigol.yaml`:
 
 ```yaml
+business:
+  name: Cooperativa d'Estellencs
 db:
   name: espigol
   server: mongodb://localhost:27017
@@ -189,6 +208,10 @@ expenses:
     "2026":
       current: 30000
       investment: 70000
+files:
+  logo: config/logo.png
+output:
+  directory: ~/espigol/reports
 server:
   port: 8080
 urls:
