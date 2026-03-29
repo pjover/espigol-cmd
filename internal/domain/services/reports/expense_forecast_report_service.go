@@ -91,6 +91,10 @@ func (s *ExpenseForecastReportService) ExpenseForecastReport(year int) (bool, st
 			subReports = append(subReports, sub)
 		}
 
+		// Page break and section heading before detail tables
+		subReports = append(subReports, NewPageBreak())
+		subReports = append(subReports, NewSectionTitle("Detall per secció i soci"))
+
 		// Add per-item detail sections for common and section scopes
 		scopeDetails := s.buildScopeDetailSubReports(cat, year, yearForecasts)
 		for _, sub := range scopeDetails {

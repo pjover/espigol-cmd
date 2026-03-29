@@ -28,6 +28,27 @@ func NewPageBreak() SubReport { return pageBreakSubReport{} }
 func (pageBreakSubReport) GetTitle() string    { return "" }
 func (pageBreakSubReport) Render(m pdf.Maroto) { m.AddPage() }
 
+// sectionTitleSubReport renders a level-1 section heading.
+type sectionTitleSubReport struct{ text string }
+
+// NewSectionTitle returns a SubReport that renders a prominent section heading.
+func NewSectionTitle(text string) SubReport { return sectionTitleSubReport{text: text} }
+
+func (s sectionTitleSubReport) GetTitle() string { return "" }
+func (s sectionTitleSubReport) Render(m pdf.Maroto) {
+	m.Row(16, func() {
+		m.Col(12, func() {
+			m.Text(s.text, props.Text{
+				Top:   4,
+				Style: consts.Bold,
+				Align: consts.Left,
+				Color: color.Color{Red: 0, Green: 51, Blue: 51},
+				Size:  16,
+			})
+		})
+	})
+}
+
 // ReportDefinition describes the full report to be rendered.
 type ReportDefinition struct {
 	PageOrientation consts.Orientation
