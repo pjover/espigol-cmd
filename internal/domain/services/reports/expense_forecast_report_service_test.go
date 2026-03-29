@@ -508,8 +508,8 @@ func TestBuildPartnerDetailSubReports_NoCap(t *testing.T) {
 
 	// Partners should be sorted by name: Maria < Pau
 	table1 := subs[0].(CustomTableSubReport)
-	if !strings.Contains(table1.Title, "Maria") {
-		t.Errorf("first detail should be Maria, got title: %s", table1.Title)
+	if table1.Title != "Maria Cortès" {
+		t.Errorf("first detail title = %q, want 'Maria Cortès'", table1.Title)
 	}
 	// Maria: 1 forecast + 1 total = 2 rows (no cap row)
 	if len(table1.Rows) != 2 {
@@ -517,8 +517,8 @@ func TestBuildPartnerDetailSubReports_NoCap(t *testing.T) {
 	}
 
 	table2 := subs[1].(CustomTableSubReport)
-	if !strings.Contains(table2.Title, "Pau") {
-		t.Errorf("second detail should be Pau, got title: %s", table2.Title)
+	if table2.Title != "Pau Bosch" {
+		t.Errorf("second detail title = %q, want 'Pau Bosch'", table2.Title)
 	}
 	// Pau: 2 forecasts + 1 total = 3 rows (no cap row)
 	if len(table2.Rows) != 3 {
@@ -530,12 +530,6 @@ func TestBuildPartnerDetailSubReports_NoCap(t *testing.T) {
 		t.Errorf("Maria's CP = %s, want CP26012", table1.Rows[0].Cells[0])
 	}
 
-	// No strikethrough for uncapped partners
-	for _, row := range table2.Rows {
-		if len(row.Strikethrough) > 0 {
-			t.Error("uncapped partner should have no strikethrough")
-		}
-	}
 }
 
 func TestBuildPartnerDetailSubReports_WithCap(t *testing.T) {
@@ -563,20 +557,70 @@ func TestBuildPartnerDetailSubReports_WithCap(t *testing.T) {
 		t.Errorf("expected 4 rows for capped partner, got %d", len(table.Rows))
 	}
 
-	// Forecast rows should have strikethrough on column 2 (Brut)
-	if !table.Rows[0].Strikethrough[2] {
-		t.Error("capped forecast row should have strikethrough on Brut column")
-	}
-	if table.Rows[0].Color == nil {
-		t.Error("capped forecast row should have red color")
+	if table.Rows[0].Color != nil {
+		t.Error("capped forecast row should have default (black) color")
 	}
 
 	// Last row should be "Import màxim autoritzat"
 	lastRow := table.Rows[3]
+	if lastRow.Color == nil {
+		t.Error("max authorized row should have red color")
+	}
 	if lastRow.Cells[1] != "Import màxim autoritzat" {
 		t.Errorf("last row label = %q, want 'Import màxim autoritzat'", lastRow.Cells[1])
 	}
 	if lastRow.Cells[2] != formatEuro(5000) {
 		t.Errorf("max authorized = %s, want %s", lastRow.Cells[2], formatEuro(5000))
+	}
+	// Should have 3 columns (no expense type)
+	if len(table.Headers) != 3 {
+		t.Errorf("expected 3 headers, got %d", len(table.Headers))
+	}
+}
+
+func TestBuildScopeDetailSubReports(t *testing.T) {
+	forecasts := []*model.ExpenseForecast{
+		newTestForecast(1, 2026, model.ExpenseSubtypeA1, model.ExpenseScopeCommon, 5000, "Common expense"),
+		newTestForecast(2, 2026, model.ExpenseSubtypeA1, model.ExpenseScopeCommon, 3000, "Another common"),
+		newTestForecast(3, 2026, model.ExpenseSubtypeA1, model.ExpenseScopeOliveSection, 2000, "Olive expense"),
+	}
+
+	svc := NewExpenseForecastReportService(newTestConfig(30000, 70000), &stubDb{})
+	subs := svc.buildScopeDetailSubReports(model.ExpenseCategoryCurrent, 2026, forecasts)
+
+	if len(subs) != 2 {
+		t.Fatalf("expected 2 scope detail sub-reports (common + olive), got %d", len(subs))
+	}
+
+	// First should be Common
+	commonTable := subs[0].(CustomTableSubReport)
+	if !strings.Contains(commonTable.Title, "Comú") {
+		t.Errorf("common title = %q, should contain 'Comú'", commonTable.Title)
+	}
+	// 2 expense rows + 1 total = 3 rows
+	if len(commonTable.Rows) != 3 {
+		t.Errorf("expected 3 rows for common, got %d", len(commonTable.Rows))
+	}
+	// Check CP code
+	if commonTable.Rows[0].Cells[0] != "CP26002" {
+		t.Errorf("first common CP = %s, want CP26002", commonTable.Rows[0].Cells[0])
+	}
+	// Check total
+	if commonTable.Rows[2].Cells[2] != formatEuro(8000) {
+		t.Errorf("common total = %s, want %s", commonTable.Rows[2].Cells[2], formatEuro(8000))
+	}
+	// 3 columns
+	if len(commonTable.Headers) != 3 {
+		t.Errorf("expected 3 headers, got %d", len(commonTable.Headers))
+	}
+
+	// Second should be Olive
+	oliveTable := subs[1].(CustomTableSubReport)
+	if !strings.Contains(oliveTable.Title, "oliva") {
+		t.Errorf("olive title = %q, should contain 'oliva'", oliveTable.Title)
+	}
+	// 1 expense row + 1 total = 2 rows
+	if len(oliveTable.Rows) != 2 {
+		t.Errorf("expected 2 rows for olive, got %d", len(oliveTable.Rows))
 	}
 }

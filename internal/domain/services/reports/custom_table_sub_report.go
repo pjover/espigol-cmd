@@ -1,8 +1,6 @@
 package reports
 
 import (
-	"strings"
-
 	"github.com/johnfercher/maroto/pkg/color"
 	"github.com/johnfercher/maroto/pkg/consts"
 	"github.com/johnfercher/maroto/pkg/pdf"
@@ -19,8 +17,6 @@ type RowDef struct {
 	Header bool
 	// Color sets the text color for the row. Nil means default (black).
 	Color *color.Color
-	// Strikethrough is a set of column indices whose text should be struck through.
-	Strikethrough map[int]bool
 }
 
 // CustomTableSubReport renders a table with per-row bold/header styling.
@@ -70,16 +66,11 @@ func (c CustomTableSubReport) Render(m pdf.Maroto) {
 			for i, cell := range rowCopy.Cells {
 				w := c.Widths[i]
 				cellText := cell
-				colIdx := i
 				align := consts.Left
 				if i == len(rowCopy.Cells)-1 {
 					align = consts.Right
 				}
 				m.Col(w, func() {
-					displayText := cellText
-					if rowCopy.Strikethrough[colIdx] {
-						displayText = applyStrikethrough(cellText)
-					}
 					textProps := props.Text{
 						Top:   1,
 						Style: style,
@@ -89,20 +80,10 @@ func (c CustomTableSubReport) Render(m pdf.Maroto) {
 					if rowCopy.Color != nil {
 						textProps.Color = *rowCopy.Color
 					}
-					m.Text(displayText, textProps)
+					m.Text(cellText, textProps)
 				})
 			}
 		})
 		_ = sectionBg
 	}
-}
-
-// applyStrikethrough adds Unicode combining long stroke overlay (U+0336) to each character.
-func applyStrikethrough(s string) string {
-	var b strings.Builder
-	for _, r := range s {
-		b.WriteRune(r)
-		b.WriteRune('\u0336')
-	}
-	return b.String()
 }
