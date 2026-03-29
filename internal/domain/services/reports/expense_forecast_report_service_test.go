@@ -198,3 +198,55 @@ func absF(x float64) float64 {
 	}
 	return x
 }
+
+func TestBuildPartnersSubReport(t *testing.T) {
+	forecasts := []*model.ExpenseForecast{
+		newTestForecast(10, 2026, model.ExpenseSubtypeA1, model.ExpenseScopePartner, 1000, "Soci A1 a"),
+		newTestForecast(11, 2026, model.ExpenseSubtypeA1, model.ExpenseScopePartner, 2000, "Soci A1 b"),
+		newTestForecast(12, 2026, model.ExpenseSubtypeA6, model.ExpenseScopePartner, 500, "Soci A6"),
+		newTestForecast(13, 2026, model.ExpenseSubtypeB1, model.ExpenseScopePartner, 8000, "Soci B1"),
+		// Common scope — should be excluded
+		newTestForecast(14, 2026, model.ExpenseSubtypeA1, model.ExpenseScopeCommon, 9999, "Comú"),
+	}
+
+	svc := NewExpenseForecastReportService(newTestConfig(30000, 70000), &stubDb{forecasts: forecasts})
+
+	// Test current category: should include A1 and A6 subtypes only
+	sub := svc.buildPartnersSubReport(model.ExpenseCategoryCurrent, forecasts)
+	table, ok := sub.(CustomTableSubReport)
+	if !ok {
+		t.Fatal("expected CustomTableSubReport")
+	}
+	if table.Title != "Despesa corrent (socis)" {
+		t.Errorf("unexpected title: %s", table.Title)
+	}
+	// 2 subtype rows + 1 total row = 3 rows
+	if len(table.Rows) != 3 {
+		t.Errorf("expected 3 rows, got %d", len(table.Rows))
+	}
+	// A1 total = 3000
+	if table.Rows[0].Cells[1] != formatEuro(3000) {
+		t.Errorf("A1 total = %s, want %s", table.Rows[0].Cells[1], formatEuro(3000))
+	}
+	// A6 total = 500
+	if table.Rows[1].Cells[1] != formatEuro(500) {
+		t.Errorf("A6 total = %s, want %s", table.Rows[1].Cells[1], formatEuro(500))
+	}
+	// Grand total = 3500
+	if table.Rows[2].Cells[1] != formatEuro(3500) {
+		t.Errorf("grand total = %s, want %s", table.Rows[2].Cells[1], formatEuro(3500))
+	}
+	if !table.Rows[2].Bold {
+		t.Error("total row should be bold")
+	}
+
+	// Test investment category: should include B1 only
+	sub2 := svc.buildPartnersSubReport(model.ExpenseCategoryInvestment, forecasts)
+	table2 := sub2.(CustomTableSubReport)
+	if len(table2.Rows) != 2 {
+		t.Errorf("expected 2 rows for investment, got %d", len(table2.Rows))
+	}
+	if table2.Rows[0].Cells[1] != formatEuro(8000) {
+		t.Errorf("B1 total = %s, want %s", table2.Rows[0].Cells[1], formatEuro(8000))
+	}
+}

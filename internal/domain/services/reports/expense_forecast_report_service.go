@@ -80,6 +80,9 @@ func (s *ExpenseForecastReportService) ExpenseForecastReport(year int) (bool, st
 			subReports = append(subReports, warnSub)
 		}
 
+		partnersSub := s.buildPartnersSubReport(cat, yearForecasts)
+		subReports = append(subReports, partnersSub)
+
 		// Page break between categories (not after the last one)
 		if cat != model.ExpenseCategoryInvestment {
 			subReports = append(subReports, NewPageBreak())
@@ -304,6 +307,65 @@ func (s *ExpenseForecastReportService) buildWarningSubReport(
 		Title:   title,
 		Widths:  []uint{4, 2, 3, 3},
 		Headers: []string{"Secció", "Socis productors", "Disponible", "Ajust"},
+		Rows:    rows,
+	}
+}
+
+// buildPartnersSubReport builds the partner-scope expenses table for a category,
+// grouped by ExpenseSubtype.
+func (s *ExpenseForecastReportService) buildPartnersSubReport(
+	cat model.ExpenseCategory,
+	forecasts []*model.ExpenseForecast,
+) SubReport {
+	title := fmt.Sprintf("%s (socis)", cat.String())
+
+	var filtered []*model.ExpenseForecast
+	for _, f := range forecasts {
+		if f.ExpenseCategory() == cat && f.Scope() == model.ExpenseScopePartner {
+			filtered = append(filtered, f)
+		}
+	}
+
+	// Group by ExpenseSubtype preserving encounter order
+	type subtypeGroup struct {
+		subtype model.ExpenseSubtype
+		total   float64
+	}
+	seen := map[model.ExpenseSubtype]int{}
+	var groups []subtypeGroup
+
+	// Sort by subtype string for consistent ordering
+	sort.Slice(filtered, func(i, j int) bool {
+		return string(filtered[i].ExpenseSubtype()) < string(filtered[j].ExpenseSubtype())
+	})
+
+	for _, f := range filtered {
+		st := f.ExpenseSubtype()
+		if idx, ok := seen[st]; ok {
+			groups[idx].total += f.GrossAmount()
+		} else {
+			seen[st] = len(groups)
+			groups = append(groups, subtypeGroup{subtype: st, total: f.GrossAmount()})
+		}
+	}
+
+	var rows []RowDef
+	var grandTotal float64
+	for _, g := range groups {
+		rows = append(rows, RowDef{
+			Cells: []string{g.subtype.String(), formatEuro(g.total)},
+		})
+		grandTotal += g.total
+	}
+	rows = append(rows, RowDef{
+		Cells: []string{"Total socis", formatEuro(grandTotal)},
+		Bold:  true,
+	})
+
+	return CustomTableSubReport{
+		Title:   title,
+		Widths:  []uint{8, 4},
+		Headers: []string{"Subtipus de despesa", "Brut (Suma)"},
 		Rows:    rows,
 	}
 }
