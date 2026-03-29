@@ -211,18 +211,24 @@ func TestBuildPartnersSubReport(t *testing.T) {
 
 	svc := NewExpenseForecastReportService(newTestConfig(30000, 70000), &stubDb{forecasts: forecasts})
 
-	// Test current category: should include A1 and A6 subtypes only
-	sub := svc.buildPartnersSubReport(model.ExpenseCategoryCurrent, forecasts)
-	table, ok := sub.(CustomTableSubReport)
+	// Test current category with no excess (remainder=10000, total=3500)
+	allocations := []partnerAllocation{
+		{partnerID: 1, partnerName: "Test Partner", requested: 3500, allocated: 3500},
+	}
+	subs := svc.buildPartnersSubReport(model.ExpenseCategoryCurrent, forecasts, 10000, allocations, 6500)
+	if len(subs) != 1 {
+		t.Fatalf("expected 1 sub-report, got %d", len(subs))
+	}
+	table, ok := subs[0].(CustomTableSubReport)
 	if !ok {
 		t.Fatal("expected CustomTableSubReport")
 	}
 	if table.Title != "Despesa corrent (socis)" {
 		t.Errorf("unexpected title: %s", table.Title)
 	}
-	// 2 subtype rows + 1 total row = 3 rows
-	if len(table.Rows) != 3 {
-		t.Errorf("expected 3 rows, got %d", len(table.Rows))
+	// 2 subtype rows + 1 total row + 1 remanent final row = 4 rows
+	if len(table.Rows) != 4 {
+		t.Errorf("expected 4 rows, got %d", len(table.Rows))
 	}
 	// A1 total = 3000
 	if table.Rows[0].Cells[1] != formatEuro(3000) {
@@ -241,12 +247,190 @@ func TestBuildPartnersSubReport(t *testing.T) {
 	}
 
 	// Test investment category: should include B1 only
-	sub2 := svc.buildPartnersSubReport(model.ExpenseCategoryInvestment, forecasts)
-	table2 := sub2.(CustomTableSubReport)
-	if len(table2.Rows) != 2 {
-		t.Errorf("expected 2 rows for investment, got %d", len(table2.Rows))
+	allocsInv := []partnerAllocation{
+		{partnerID: 1, partnerName: "Test Partner", requested: 8000, allocated: 8000},
+	}
+	subs2 := svc.buildPartnersSubReport(model.ExpenseCategoryInvestment, forecasts, 50000, allocsInv, 42000)
+	if len(subs2) != 1 {
+		t.Fatalf("expected 1 sub-report for investment, got %d", len(subs2))
+	}
+	table2 := subs2[0].(CustomTableSubReport)
+	// 1 subtype row + 1 total row + 1 remanent final row = 3 rows
+	if len(table2.Rows) != 3 {
+		t.Errorf("expected 3 rows for investment, got %d", len(table2.Rows))
 	}
 	if table2.Rows[0].Cells[1] != formatEuro(8000) {
 		t.Errorf("B1 total = %s, want %s", table2.Rows[0].Cells[1], formatEuro(8000))
+	}
+}
+
+func TestDistributeRemainder_NoExcess(t *testing.T) {
+	totals := map[int]float64{1: 1000, 2: 1000, 3: 1000}
+	names := map[int]string{1: "A", 2: "B", 3: "C"}
+	allocs, finalRem := distributeRemainder(5000, totals, names)
+	if len(allocs) != 3 {
+		t.Fatalf("expected 3 allocations, got %d", len(allocs))
+	}
+	for _, a := range allocs {
+		if a.allocated != a.requested {
+			t.Errorf("partner %s: allocated=%.2f, want %.2f", a.partnerName, a.allocated, a.requested)
+		}
+	}
+	if absF(finalRem-2000) > 0.01 {
+		t.Errorf("finalRemainder=%.2f, want 2000", finalRem)
+	}
+}
+
+func TestDistributeRemainder_UniformExcess(t *testing.T) {
+	totals := map[int]float64{1: 4000, 2: 4000, 3: 4000}
+	names := map[int]string{1: "A", 2: "B", 3: "C"}
+	allocs, finalRem := distributeRemainder(9000, totals, names)
+	for _, a := range allocs {
+		if absF(a.allocated-3000) > 0.01 {
+			t.Errorf("partner %s: allocated=%.2f, want 3000", a.partnerName, a.allocated)
+		}
+	}
+	if absF(finalRem) > 0.01 {
+		t.Errorf("finalRemainder=%.2f, want ~0", finalRem)
+	}
+}
+
+func TestDistributeRemainder_NonUniformExcess(t *testing.T) {
+	// A=6000, B=2000, C=5000, remainder=9000
+	// Mean = 3000. B(2000) <= mean → fixed. Budget left = 7000 for A,C.
+	// Mean = 3500. Both A,C > 3500 → capped at 3500.
+	// Total = 2000 + 3500 + 3500 = 9000
+	totals := map[int]float64{1: 6000, 2: 2000, 3: 5000}
+	names := map[int]string{1: "A", 2: "B", 3: "C"}
+	allocs, finalRem := distributeRemainder(9000, totals, names)
+
+	allocMap := map[string]float64{}
+	for _, a := range allocs {
+		allocMap[a.partnerName] = a.allocated
+	}
+	if absF(allocMap["B"]-2000) > 0.01 {
+		t.Errorf("B allocated=%.2f, want 2000", allocMap["B"])
+	}
+	if absF(allocMap["A"]-3500) > 0.01 {
+		t.Errorf("A allocated=%.2f, want 3500", allocMap["A"])
+	}
+	if absF(allocMap["C"]-3500) > 0.01 {
+		t.Errorf("C allocated=%.2f, want 3500", allocMap["C"])
+	}
+	if absF(finalRem) > 0.01 {
+		t.Errorf("finalRemainder=%.2f, want ~0", finalRem)
+	}
+}
+
+func TestDistributeRemainder_MultipleRounds(t *testing.T) {
+	// A=10000, B=1000, C=500, D=8000, remainder=9000
+	// Round 1: mean=2250. B(1000),C(500) fixed. Budget left=7500 for A,D.
+	// Round 2: mean=3750. Both A,D > 3750 → capped.
+	// Total = 1000 + 500 + 3750 + 3750 = 9000
+	totals := map[int]float64{1: 10000, 2: 1000, 3: 500, 4: 8000}
+	names := map[int]string{1: "A", 2: "B", 3: "C", 4: "D"}
+	allocs, finalRem := distributeRemainder(9000, totals, names)
+
+	var total float64
+	allocMap := map[string]float64{}
+	for _, a := range allocs {
+		allocMap[a.partnerName] = a.allocated
+		total += a.allocated
+	}
+	if absF(allocMap["B"]-1000) > 0.01 {
+		t.Errorf("B=%.2f, want 1000", allocMap["B"])
+	}
+	if absF(allocMap["C"]-500) > 0.01 {
+		t.Errorf("C=%.2f, want 500", allocMap["C"])
+	}
+	if absF(allocMap["A"]-3750) > 0.01 {
+		t.Errorf("A=%.2f, want 3750", allocMap["A"])
+	}
+	if absF(allocMap["D"]-3750) > 0.01 {
+		t.Errorf("D=%.2f, want 3750", allocMap["D"])
+	}
+	if absF(total-9000) > 0.01 {
+		t.Errorf("total=%.2f, want 9000", total)
+	}
+	if absF(finalRem) > 0.01 {
+		t.Errorf("finalRemainder=%.2f, want ~0", finalRem)
+	}
+}
+
+func TestDistributeRemainder_SinglePartner(t *testing.T) {
+	// Partner requests more than remainder
+	totals := map[int]float64{1: 5000}
+	names := map[int]string{1: "A"}
+	allocs, finalRem := distributeRemainder(3000, totals, names)
+	if len(allocs) != 1 {
+		t.Fatalf("expected 1 allocation, got %d", len(allocs))
+	}
+	if absF(allocs[0].allocated-3000) > 0.01 {
+		t.Errorf("allocated=%.2f, want 3000", allocs[0].allocated)
+	}
+	if absF(finalRem) > 0.01 {
+		t.Errorf("finalRemainder=%.2f, want ~0", finalRem)
+	}
+
+	// Partner requests less than remainder
+	allocs2, finalRem2 := distributeRemainder(8000, totals, names)
+	if absF(allocs2[0].allocated-5000) > 0.01 {
+		t.Errorf("allocated=%.2f, want 5000", allocs2[0].allocated)
+	}
+	if absF(finalRem2-3000) > 0.01 {
+		t.Errorf("finalRemainder=%.2f, want 3000", finalRem2)
+	}
+}
+
+func TestDistributeRemainder_ZeroRemainder(t *testing.T) {
+	totals := map[int]float64{1: 1000, 2: 2000}
+	names := map[int]string{1: "A", 2: "B"}
+	allocs, finalRem := distributeRemainder(0, totals, names)
+	for _, a := range allocs {
+		if absF(a.allocated) > 0.01 {
+			t.Errorf("partner %s: allocated=%.2f, want 0", a.partnerName, a.allocated)
+		}
+	}
+	if absF(finalRem) > 0.01 {
+		t.Errorf("finalRemainder=%.2f, want 0", finalRem)
+	}
+}
+
+func TestDistributeRemainder_Empty(t *testing.T) {
+	allocs, finalRem := distributeRemainder(5000, map[int]float64{}, map[int]string{})
+	if len(allocs) != 0 {
+		t.Errorf("expected 0 allocations, got %d", len(allocs))
+	}
+	if absF(finalRem-5000) > 0.01 {
+		t.Errorf("finalRemainder=%.2f, want 5000", finalRem)
+	}
+}
+
+func TestBuildPartnersSubReport_WithExcess(t *testing.T) {
+	forecasts := []*model.ExpenseForecast{
+		newTestForecast(10, 2026, model.ExpenseSubtypeA1, model.ExpenseScopePartner, 5000, "Soci A1"),
+		newTestForecast(11, 2026, model.ExpenseSubtypeA6, model.ExpenseScopePartner, 3000, "Soci A6"),
+	}
+	svc := NewExpenseForecastReportService(newTestConfig(30000, 70000), &stubDb{forecasts: forecasts})
+
+	allocations := []partnerAllocation{
+		{partnerID: 1, partnerName: "Test Partner", requested: 8000, allocated: 5000},
+	}
+	// remainder=5000 but total=8000 → excess, should produce 2 sub-reports
+	subs := svc.buildPartnersSubReport(model.ExpenseCategoryCurrent, forecasts, 5000, allocations, 0)
+	if len(subs) != 2 {
+		t.Fatalf("expected 2 sub-reports (table + adjustment), got %d", len(subs))
+	}
+	// Second sub-report should be the adjustment table
+	adjTable, ok := subs[1].(CustomTableSubReport)
+	if !ok {
+		t.Fatal("expected CustomTableSubReport for adjustment")
+	}
+	if !strings.Contains(adjTable.Title, "Ajust") {
+		t.Errorf("adjustment title should contain 'Ajust', got: %s", adjTable.Title)
+	}
+	// 1 partner row + 1 total row = 2 rows
+	if len(adjTable.Rows) != 2 {
+		t.Errorf("expected 2 rows in adjustment table, got %d", len(adjTable.Rows))
 	}
 }

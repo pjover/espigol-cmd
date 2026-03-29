@@ -15,6 +15,8 @@ type RowDef struct {
 	Bold bool
 	// Header renders the row as a column header (bold + dark background).
 	Header bool
+	// Color sets the text color for the row. Nil means default (black).
+	Color *color.Color
 }
 
 // CustomTableSubReport renders a table with per-row bold/header styling.
@@ -69,12 +71,16 @@ func (c CustomTableSubReport) Render(m pdf.Maroto) {
 					align = consts.Right
 				}
 				m.Col(w, func() {
-					m.Text(cellText, props.Text{
+					textProps := props.Text{
 						Top:   1,
 						Style: style,
 						Size:  9,
 						Align: align,
-					})
+					}
+					if rowCopy.Color != nil {
+						textProps.Color = *rowCopy.Color
+					}
+					m.Text(cellText, textProps)
 				})
 			}
 		})
